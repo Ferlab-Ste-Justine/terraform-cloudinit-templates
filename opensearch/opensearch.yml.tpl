@@ -27,7 +27,11 @@ plugins.security.ssl.transport.resolve_hostname: true
 plugins.security.ssl.transport.enforce_hostname_verification: false
 plugins.security.ssl.transport.resolve_hostname: false
 %{ endif ~}
+%{ if opensearch_cluster.basic_auth_enabled ~}
+plugins.security.ssl.http.clientauth_mode: OPTIONAL
+%{ else ~}
 plugins.security.ssl.http.clientauth_mode: REQUIRE
+%{ endif ~}
 plugins.security.ssl.transport.pemkey_filepath: /etc/opensearch/server-certs/server-key-pk8.pem
 plugins.security.ssl.transport.pemcert_filepath: /etc/opensearch/server-certs/server.crt
 plugins.security.ssl.transport.pemtrustedcas_filepath: /etc/opensearch/ca-certs/ca.crt
