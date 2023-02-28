@@ -76,6 +76,9 @@ packages:
 %{ endif ~}
 
 runcmd:
+  #Protect portmapper port
+  - iptables -A INPUT -p tcp -s localhost --dport 111 -j ACCEPT
+  - iptables -A INPUT -p tcp --dport 111 -j DROP
   #Setup envoy
 %{ if install_dependencies ~}
   - wget -O /usr/local/bin/envoy https://github.com/envoyproxy/envoy/releases/download/v1.25.1/envoy-1.25.1-linux-x86_64
