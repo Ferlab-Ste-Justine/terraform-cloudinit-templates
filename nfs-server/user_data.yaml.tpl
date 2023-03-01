@@ -87,15 +87,19 @@ write_files:
 %{ if install_dependencies ~}
 packages:
   - nfs-kernel-server
+  - iptables-persistent
 %{ endif ~}
 
 runcmd:
-  #Prevent non-local portmapper port access
+  #Prevent direct external access to portmapper and nfs
+  - systemctl enable netfilter-persistent.service
+  - systemctl start netfilter-persistent.service
   - iptables -A INPUT -p tcp -s localhost --dport 111 -j ACCEPT
   - iptables -A INPUT -p tcp --dport 111 -j DROP
-  #Prevent non-local nfs port access
-  #- iptables -A INPUT -p tcp -s localhost --dport 2049 -j ACCEPT
-  #- iptables -A INPUT -p tcp --dport 2049 -j DROP
+  - iptables -A INPUT -p tcp -s localhost --dport 2049 -j ACCEPT
+  - iptables -A INPUT -p tcp --dport 2049 -j DROP
+  - iptables-save > /etc/iptables/rules.v4
+  - ip6tables-save > /etc/iptables/rules.v6
   #Finalize nfs setup
   - /opt/generate_nfs_dirs.sh
   - cp /opt/nfs_exports /etc/exports

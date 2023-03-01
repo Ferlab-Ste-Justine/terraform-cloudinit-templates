@@ -73,12 +73,17 @@ write_files:
 %{ if install_dependencies ~}
 packages:
   - nfs-common
+  - iptables-persistent
 %{ endif ~}
 
 runcmd:
   #Protect portmapper port
+  - systemctl enable netfilter-persistent.service
+  - systemctl start netfilter-persistent.service
   - iptables -A INPUT -p tcp -s localhost --dport 111 -j ACCEPT
   - iptables -A INPUT -p tcp --dport 111 -j DROP
+  - iptables-save > /etc/iptables/rules.v4
+  - ip6tables-save > /etc/iptables/rules.v6
   #Setup envoy
 %{ if install_dependencies ~}
   - wget -O /usr/local/bin/envoy https://github.com/envoyproxy/envoy/releases/download/v1.25.1/envoy-1.25.1-linux-x86_64
