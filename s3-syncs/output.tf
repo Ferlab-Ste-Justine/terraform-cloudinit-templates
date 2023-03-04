@@ -5,7 +5,8 @@ output "configuration" {
     {
       install_dependencies = var.install_dependencies
       object_store = var.object_store
-      backup = var.backup
+      outgoing_sync = var.outgoing_sync
+      incoming_sync = var.incoming_sync
     }
   )
 }

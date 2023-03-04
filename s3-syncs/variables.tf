@@ -10,13 +10,34 @@ variable "object_store" {
   })
 }
 
-variable "backup" {
+variable "outgoing_sync" {
   description = "Object store parameters"
   type = object({
     calendar   = string
     bucket     = string
     paths      = list(string)
   })
+  default = {
+    calendar   = ""
+    bucket     = ""
+    paths      = []
+  }
+}
+
+variable "incoming_sync" {
+  description = "Object store parameters"
+  type = object({
+    sync_once  = bool
+    calendar   = string
+    bucket     = string
+    paths      = list(string)
+  })
+  default = {
+    sync_once  = false
+    calendar   = ""
+    bucket     = ""
+    paths      = []
+  }
 }
 
 variable "install_dependencies" {
