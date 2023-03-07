@@ -18,7 +18,7 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
-      [minio]
+      [s3]
       type = s3
       provider = Minio
       env_auth = true
@@ -41,9 +41,9 @@ write_files:
 
 %{ for path in outgoing_sync.paths ~}
 %{ if object_store.ca_cert != "" ~}
-      rclone sync --ca-cert /etc/s3-sync/ca.crt ${path} minio:${outgoing_sync.bucket}${path}
+      rclone sync --ca-cert /etc/s3-sync/ca.crt ${path} s3:${outgoing_sync.bucket}${path}
 %{ else ~}
-      rclone sync ${path} minio:${outgoing_sync.bucket}${path}
+      rclone sync ${path} s3:${outgoing_sync.bucket}${path}
 %{ endif ~}
 %{ endfor ~}
   #Rclone Sync Systemd Configuration
@@ -89,9 +89,9 @@ write_files:
 
 %{ for path in incoming_sync.paths ~}
 %{ if object_store.ca_cert != "" ~}
-      rclone sync --ca-cert /etc/s3-sync/ca.crt minio:${incoming_sync.bucket}${path} ${path}
+      rclone sync --ca-cert /etc/s3-sync/ca.crt s3:${incoming_sync.bucket}${path} ${path}
 %{ else ~}
-      rclone sync minio:${incoming_sync.bucket}${path} ${path}
+      rclone sync s3:${incoming_sync.bucket}${path} ${path}
 %{ endif ~}
 %{ endfor ~}
   #Rclone Sync Systemd Configuration
