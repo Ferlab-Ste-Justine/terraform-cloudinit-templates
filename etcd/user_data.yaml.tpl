@@ -133,7 +133,7 @@ runcmd:
 %{ endif ~}
   #Create etcd service data directory
   - mkdir -p /var/lib/etcd
-  - chown etcd:etcd /var/lib/etcd
+  - chown etcd:etcd -R /var/lib/etcd
   - chmod 0700 /var/lib/etcd
   #State etcd service
   - systemctl enable etcd
