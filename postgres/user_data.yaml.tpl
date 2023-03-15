@@ -98,6 +98,7 @@ runcmd:
   - systemctl stop postgresql
   - systemctl disable postgresql
   - rm /var/log/postgresql/*
+  - rm -r /var/lib/postgresql/14/main
 %{ endif ~}
   - mkdir -p /var/lib/postgresql/14/data
   - chmod 0700 /var/lib/postgresql/14/data
