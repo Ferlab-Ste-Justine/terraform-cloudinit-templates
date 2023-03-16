@@ -40,11 +40,7 @@ write_files:
       set -xe
 
 %{ for path in outgoing_sync.paths ~}
-%{ if object_store.ca_cert != "" ~}
-      rclone sync --ca-cert /etc/s3-sync/ca.crt ${path} s3:${outgoing_sync.bucket}${path}
-%{ else ~}
-      rclone sync ${path} s3:${outgoing_sync.bucket}${path}
-%{ endif ~}
+      rclone ${outgoing_sync_rclone_args} sync ${path} s3:${outgoing_sync.bucket}${path}
 %{ endfor ~}
   #Rclone Sync Systemd Configuration
   - path: /etc/systemd/system/s3-outgoing-sync.timer
@@ -88,11 +84,7 @@ write_files:
       set -xe
 
 %{ for path in incoming_sync.paths ~}
-%{ if object_store.ca_cert != "" ~}
-      rclone sync --ca-cert /etc/s3-sync/ca.crt s3:${incoming_sync.bucket}${path} ${path}
-%{ else ~}
-      rclone sync s3:${incoming_sync.bucket}${path} ${path}
-%{ endif ~}
+      rclone sync ${incoming_sync_rclone_args} s3:${incoming_sync.bucket}${path} ${path}
 %{ endfor ~}
   #Rclone Sync Systemd Configuration
   - path: /etc/systemd/system/s3-incoming-sync.timer
@@ -165,11 +157,11 @@ packages:
 runcmd:
 %{ if install_dependencies ~}
   #Install rclone
-  - curl -L https://github.com/rclone/rclone/releases/download/v1.61.1/rclone-v1.61.1-linux-amd64.zip -o /tmp/rclone-v1.61.1-linux-amd64.zip
+  - curl -L https://github.com/rclone/rclone/releases/download/v1.62.2/rclone-v1.62.2-linux-amd64.zip -o /tmp/rclone-v1.62.2-linux-amd64.zip
   - mkdir -p /tmp/rclone
-  - unzip /tmp/rclone-v1.61.1-linux-amd64.zip -d /tmp/rclone
-  - cp /tmp/rclone/rclone-v1.61.1-linux-amd64/rclone /usr/local/bin/rclone
+  - unzip /tmp/rclone-v1.62.2-linux-amd64.zip -d /tmp/rclone
+  - cp /tmp/rclone/rclone-v1.62.2-linux-amd64/rclone /usr/local/bin/rclone
   - rm -rf /tmp/rclone
-  - rm -f /tmp/rclone-v1.61.1-linux-amd64.zip
+  - rm -f /tmp/rclone-v1.62.2-linux-amd64.zip
 %{ endif ~}
   - /opt/s3_start_sync_services.sh

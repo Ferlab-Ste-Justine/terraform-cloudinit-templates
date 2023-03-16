@@ -16,11 +16,18 @@ variable "outgoing_sync" {
     calendar   = string
     bucket     = string
     paths      = list(string)
+    symlinks   = string
   })
   default = {
     calendar   = ""
     bucket     = ""
     paths      = []
+    symlinks   = "copy"
+  }
+
+  validation {
+    condition     = contains(["copy", "follow", "skip"], var.outgoing_sync.symlinks)
+    error_message = "value for symlinks argument must be one of: \"copy\", \"follow\" or \"ignore\"."
   }
 }
 
@@ -31,12 +38,19 @@ variable "incoming_sync" {
     calendar   = string
     bucket     = string
     paths      = list(string)
+    symlinks   = string
   })
   default = {
     sync_once  = false
     calendar   = ""
     bucket     = ""
     paths      = []
+    symlinks   = "copy"
+  }
+
+  validation {
+    condition     = contains(["copy", "follow", "skip"], var.incoming_sync.symlinks)
+    error_message = "value for symlinks argument must be one of: \"copy\", \"follow\" or \"ignore\"."
   }
 }
 
