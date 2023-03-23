@@ -23,3 +23,6 @@ resources:
                 - name: envoy.access_loggers.stdout
                   typed_config:
                     "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+                    log_format:
+                      text_format_source:
+                        inline_string: "[%START_TIME%][Connection] %DOWNSTREAM_REMOTE_ADDRESS% to %UPSTREAM_HOST% (cluster %UPSTREAM_CLUSTER%). Error flags: %RESPONSE_FLAGS%\n"
