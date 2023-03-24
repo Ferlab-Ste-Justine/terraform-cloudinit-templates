@@ -118,5 +118,6 @@ runcmd:
   - chmod +x /usr/local/bin/envoy
 %{ endif ~}
   - chown -R transport-load-balancer:transport-load-balancer /etc/transport-load-balancer
+  - setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/envoy
   - systemctl enable transport-load-balancer
   - systemctl start transport-load-balancer
