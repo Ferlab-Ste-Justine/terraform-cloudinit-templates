@@ -67,7 +67,7 @@ write_files:
       Type=simple
       Restart=always
       RestartSec=1
-      Environment=ENVOY_TCP_CONFIG_FILE/etc/transport-control-plane/config.yml
+      Environment=ENVOY_TCP_CONFIG_FILE=/etc/transport-control-plane/config.yml
       # Ugly workaround for now: https://github.com/envoyproxy/envoy/issues/8297#issuecomment-620659781
       ExecStart=bash -c '/usr/local/bin/envoy-transport-control-plane 
 
