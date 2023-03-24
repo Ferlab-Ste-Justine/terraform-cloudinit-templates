@@ -30,17 +30,26 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, control_plane.etcd.ca_cert)}
+      ${indent(6, control_plane.etcd.ca_certificate)}
+%{ if control_plane.etcd.client.username != "" ~}
   - path: /etc/transport-control-plane/etcd/client.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, control_plane.etcd.client_cert)}
+      ${indent(6, control_plane.etcd.client.certificate)}
   - path: /etc/transport-control-plane/etcd/client.key
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, control_plane.etcd.client_key)}
+      ${indent(6, control_plane.etcd.client.key)}
+%{ else ~}
+  - path: /etc/transport-control-plane/etcd/auth.yml
+    owner: root:root
+    permissions: "0400"
+    content: |
+      username: "${control_plane.etcd.client.username}"
+      password: "${control_plane.etcd.client.password}"
+%{ endif ~}
   #Transport control plane systemd configuration
   - path: /etc/systemd/system/transport-control-plane.service
     owner: root:root

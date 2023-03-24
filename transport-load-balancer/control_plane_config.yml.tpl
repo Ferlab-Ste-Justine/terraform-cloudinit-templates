@@ -9,8 +9,12 @@ etcd_client:
   retries: ${control_plane.etcd.retries}
   auth:
     ca_cert: "/etc/transport-control-plane/etcd/ca.crt"
+%{ if control_plane.etcd.client.username != "" ~}
     client_cert: "/etc/transport-control-plane/etcd/client.crt"
     client_key: "/etc/transport-control-plane/etcd/client.key"
+%{ else ~}
+    password_auth: /etc/transport-control-plane/etcd/auth.yml
+%{ endif ~}
 server:
   port: ${control_plane.server.port}
   bind_ip: "127.0.0.1"

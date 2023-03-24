@@ -21,9 +21,13 @@ variable "control_plane" {
       connection_timeout = string
       request_timeout    = string
       retries            = number
-      ca_cert            = string
-      client_cert        = string
-      client_key         = string
+      ca_certificate     = string
+      client             = object({
+        certificate = string
+        key         = string
+        username    = string
+        password    = string
+      })
     })
   })
 }
