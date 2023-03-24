@@ -9,7 +9,7 @@ etcd_client:
   retries: ${control_plane.etcd.retries}
   auth:
     ca_cert: "/etc/transport-control-plane/etcd/ca.crt"
-%{ if control_plane.etcd.client.username != "" ~}
+%{ if control_plane.etcd.client.username == "" ~}
     client_cert: "/etc/transport-control-plane/etcd/client.crt"
     client_key: "/etc/transport-control-plane/etcd/client.key"
 %{ else ~}

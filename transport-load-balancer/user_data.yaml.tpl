@@ -31,7 +31,7 @@ write_files:
     permissions: "0400"
     content: |
       ${indent(6, control_plane.etcd.ca_certificate)}
-%{ if control_plane.etcd.client.username != "" ~}
+%{ if control_plane.etcd.client.username == "" ~}
   - path: /etc/transport-control-plane/etcd/client.crt
     owner: root:root
     permissions: "0400"
