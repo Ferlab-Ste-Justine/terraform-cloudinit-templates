@@ -36,7 +36,6 @@ variable "postgres" {
 variable "patroni" {
   description = "Parameters pertaining to patroni"
   type        = object({
-    
     scope                  = string
     namespace              = string
     name                   = string
