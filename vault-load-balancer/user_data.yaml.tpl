@@ -6,32 +6,20 @@ merge_how:
    settings: [no_replace, recurse_list]
 
 write_files:
-  #Container registry configs
-%{ if container_registry.url != "" ~}
-  - path: /opt/docker/config.json
-    owner: root:root
-    permissions: "0440"
-    content: |
-      {
-        "auths": {
-          "${container_registry.url}": {
-            "auth": "${base64encode(join("", [container_registry.username, ":", container_registry.password]))}"
-          }
-        }
-      }
-%{ endif ~}
-  #Patroni tls files for health checks
-  - path: /opt/patroni/ca.pem
+  #Vault tls files for health checks
+  - path: /opt/vault/ca.crt
     owner: root:root
     permissions: "0444"
     content: |
-      ${indent(6, patroni_api.ca_certificate)}
-  - path: /opt/patroni/client.pem
+      ${indent(6, tls.ca_certificate)}
+%{ if tls.client_auth ~}
+  - path: /opt/vault/client.pem
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, "${patroni_api.client_certificate}\n${patroni_api.client_key}")}
-  #Postgres load balancer haproxy configuration
+      ${indent(6, "${tls.client_certificate}\n${tls.client_key}")}
+%{ endif ~}
+  #Vault load balancer haproxy configuration
   - path: /opt/haproxy/haproxy.cfg
     owner: root:root
     permissions: "0444"
@@ -55,5 +43,7 @@ runcmd:
   - apt-get update
   - apt-get install -y docker-ce docker-ce-cli containerd.io
 %{ endif ~}
+  - chown -R www-data:www-data /opt/haproxy
+  - chown -R www-data:www-data /opt/vault
   - systemctl enable docker
-  - docker ${container_params.config} run -d --restart=always --name=postgres_load_balancer --network=host -v /opt/haproxy:/usr/local/etc/haproxy:ro -v /opt/patroni:/opt/patroni/:ro ${container_params.fluentd} haproxy:2.2.14
+  - docker run -d --restart=always --name=vault_load_balancer --user www-data -v /opt/haproxy:/usr/local/etc/haproxy:ro -v /opt/vault:/opt/vault/:ro -p 80:80 -p 443:443 --sysctl net.ipv4.ip_unprivileged_port_start=0 haproxy:2.7.6
