@@ -6,6 +6,20 @@ merge_how:
    settings: [no_replace, recurse_list]
 
 write_files:
+  #Container registry configs
+%{ if container_registry.url != "" ~}
+  - path: /opt/docker/config.json
+    owner: root:root
+    permissions: "0440"
+    content: |
+      {
+        "auths": {
+          "${container_registry.url}": {
+            "auth": "${base64encode(join("", [container_registry.username, ":", container_registry.password]))}"
+          }
+        }
+      }
+%{ endif ~}
   #Vault tls files for health checks
   - path: /opt/vault/ca.crt
     owner: root:root
@@ -46,4 +60,4 @@ runcmd:
   - chown -R www-data:www-data /opt/haproxy
   - chown -R www-data:www-data /opt/vault
   - systemctl enable docker
-  - docker run -d --restart=always --name=vault_load_balancer --user www-data -v /opt/haproxy:/usr/local/etc/haproxy:ro -v /opt/vault:/opt/vault/:ro -p 80:80 -p 443:443 --sysctl net.ipv4.ip_unprivileged_port_start=0 haproxy:2.7.6
+  - docker run ${container_params.config} -d --restart=always --name=vault_load_balancer --user www-data -v /opt/haproxy:/usr/local/etc/haproxy:ro -v /opt/vault:/opt/vault/:ro -p 80:80 -p 443:443 --sysctl net.ipv4.ip_unprivileged_port_start=0 ${container_params.fluentd} haproxy:2.7.6
