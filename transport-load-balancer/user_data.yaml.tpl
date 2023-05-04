@@ -101,12 +101,12 @@ write_files:
 runcmd:
   #Setup control plane
 %{ if install_dependencies ~}
-  - wget -O /tmp/envoy-transport-control-plane_0.1.0_linux_amd64.tar.gz https://github.com/Ferlab-Ste-Justine/envoy-transport-control-plane/releases/download/v0.1.0/envoy-transport-control-plane_0.1.0_linux_amd64.tar.gz
+  - wget -O /tmp/envoy-transport-control-plane_0.2.0_linux_amd64.tar.gz https://github.com/Ferlab-Ste-Justine/envoy-transport-control-plane/releases/download/v0.2.0/envoy-transport-control-plane_0.2.0_linux_amd64.tar.gz
   - mkdir -p /tmp/envoy-transport-control-plane
-  - tar zxvf /tmp/envoy-transport-control-plane_0.1.0_linux_amd64.tar.gz -C /tmp/envoy-transport-control-plane
+  - tar zxvf /tmp/envoy-transport-control-plane_0.2.0_linux_amd64.tar.gz -C /tmp/envoy-transport-control-plane
   - cp /tmp/envoy-transport-control-plane/envoy-transport-control-plane /usr/local/bin/envoy-transport-control-plane
   - rm -rf /tmp/envoy-transport-control-plane
-  - rm -f /tmp/envoy-transport-control-plane_0.1.0_linux_amd64.tar.gz
+  - rm -f /tmp/envoy-transport-control-plane_0.2.0_linux_amd64.tar.gz
   - chmod +x /usr/local/bin/envoy-transport-control-plane
 %{ endif ~}
   - chown -R transport-control-plane:transport-control-plane /etc/transport-control-plane
