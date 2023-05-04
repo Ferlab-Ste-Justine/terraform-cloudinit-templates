@@ -114,7 +114,7 @@ runcmd:
   - systemctl start transport-control-plane
   #Setup envoy
 %{ if install_dependencies ~}
-  - wget -O /usr/local/bin/envoy https://github.com/envoyproxy/envoy/releases/download/v1.25.2/envoy-1.25.2-linux-x86_64
+  - wget -O /usr/local/bin/envoy https://github.com/envoyproxy/envoy/releases/download/v1.25.6/envoy-1.25.6-linux-x86_64
   - chmod +x /usr/local/bin/envoy
 %{ endif ~}
   - chown -R transport-load-balancer:transport-load-balancer /etc/transport-load-balancer
