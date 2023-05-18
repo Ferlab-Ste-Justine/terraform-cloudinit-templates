@@ -3,6 +3,22 @@ variable "install_dependencies" {
   type        = bool
 }
 
+variable "etcd" {
+  description = "Parameters to connect to an optional etcd backend to auto update"
+  type        = object({
+    enabled = bool
+    key_prefix = string
+    endpoints = list(string)
+    ca_certificate = string
+    client = object({
+      certificate = string
+      key = string
+      username = string
+      password = string
+    })
+  })
+}
+
 variable "fluentbit" {
   description = "Fluent-bit configurations"
   sensitive   = true
