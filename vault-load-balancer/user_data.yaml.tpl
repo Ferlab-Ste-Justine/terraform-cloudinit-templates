@@ -60,4 +60,4 @@ runcmd:
   - chown -R www-data:www-data /opt/haproxy
   - chown -R www-data:www-data /opt/vault
   - systemctl enable docker
-  - docker run ${container_params.config} -d --restart=always --name=vault_load_balancer --user www-data -v /opt/haproxy:/usr/local/etc/haproxy:ro -v /opt/vault:/opt/vault/:ro -p 80:80 -p 443:443 --sysctl net.ipv4.ip_unprivileged_port_start=0 ${container_params.fluentd} haproxy:2.7.6
+  - docker ${container_params.config} run -d --restart=always --name=vault_load_balancer --user www-data -v /opt/haproxy:/usr/local/etc/haproxy:ro -v /opt/vault:/opt/vault/:ro -p 80:80 -p 443:443 --sysctl net.ipv4.ip_unprivileged_port_start=0 ${container_params.fluentd} haproxy:2.7.6
