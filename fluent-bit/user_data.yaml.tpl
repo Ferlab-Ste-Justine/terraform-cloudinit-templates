@@ -30,11 +30,11 @@ write_files:
     owner: root:root
     permissions: "0444"
     content: |
-      @INCLUDE /etc/fluent-bit-customization/default-config/service.conf
+      @INCLUDE /etc/fluent-bit-customization/default-config/fluent-bit-service.conf
 
-      @INCLUDE /etc/fluent-bit-customization/default-config/inputs.conf
+      @INCLUDE /etc/fluent-bit-customization/default-config/fluent-bit-inputs.conf
 
-      @INCLUDE /etc/fluent-bit-customization/default-config/output.conf
+      @INCLUDE /etc/fluent-bit-customization/default-config/fluent-bit-output.conf
   - path: /etc/fluent-bit-customization/default-config/fluent-bit-dynamic.conf
     owner: root:root
     permissions: "0444"
