@@ -40,25 +40,25 @@ write_files:
 
       [Install]
       WantedBy=multi-user.target
-  - path: /etc/coredns-auto-updater/ca.crt
+  - path: /etc/coredns-zonefiles-updater/ca.crt
     owner: root:root
     permissions: "0444"
     content: |
       ${indent(6, etcd.ca_certificate)}
 %{ if etcd.client.username == "" ~}
-  - path: /etc/coredns-auto-updater/client.crt
+  - path: /etc/coredns-zonefiles-updater/client.crt
     owner: root:root
     permissions: "0444"
     content: |
       ${indent(6, etcd.client.certificate)}
-  - path: /etc/coredns-auto-updater/client.key
+  - path: /etc/coredns-zonefiles-updater/client.key
     owner: root:root
     permissions: "0440"
     content: |
       ${indent(6, etcd.client.key)}
 %{ endif ~}
   #Coredns auto updater systemd configuration
-  - path: /etc/systemd/system/coredns-auto-updater.service
+  - path: /etc/systemd/system/coredns-zonefiles-updater.service
     owner: root:root
     permissions: "0444"
     content: |
@@ -74,10 +74,10 @@ write_files:
       Environment=REQUEST_RETRIES=0
       Environment=FILESYSTEM_PATH=/opt/coredns/zonefiles
       Environment=ETCD_ENDPOINTS=${join(",", etcd.endpoints)}
-      Environment=CA_CERT_PATH=/etc/coredns-auto-updater/ca.crt
+      Environment=CA_CERT_PATH=/etc/coredns-zonefiles-updater/ca.crt
 %{ if etcd.client.username == "" ~}
-      Environment=USER_CERT_PATH=/etc/coredns-auto-updater/client.crt
-      Environment=USER_KEY_PATH=/etc/coredns-auto-updater/client.key
+      Environment=USER_CERT_PATH=/etc/coredns-zonefiles-updater/client.crt
+      Environment=USER_KEY_PATH=/etc/coredns-zonefiles-updater/client.key
 %{ else ~}
       Environment=USER_NAME=${etcd.client.username}
       Environment=USER_PASSWORD=${etcd.client.password}
@@ -89,7 +89,7 @@ write_files:
       Restart=always
       RestartSec=1
       WorkingDirectory=/opt/coredns/zonefiles
-      ExecStart=/usr/local/bin/configurations-auto-updater
+      ExecStart=/usr/local/bin/coredns-zonefiles-updater
 
       [Install]
       WantedBy=multi-user.target
@@ -106,15 +106,15 @@ runcmd:
   - curl -L https://github.com/Ferlab-Ste-Justine/configurations-auto-updater/releases/download/v0.3.0/configurations-auto-updater_0.3.0_linux_amd64.tar.gz -o /tmp/configurations-auto-updater_0.3.0_linux_amd64.tar.gz
   - mkdir -p /tmp/configurations-auto-updater
   - tar zxvf /tmp/configurations-auto-updater_0.3.0_linux_amd64.tar.gz -C /tmp/configurations-auto-updater
-  - cp /tmp/configurations-auto-updater/configurations-auto-updater /usr/local/bin/configurations-auto-updater
+  - cp /tmp/configurations-auto-updater/configurations-auto-updater /usr/local/bin/coredns-zonefiles-updater
   - rm -rf /tmp/configurations-auto-updater
   - rm -f /tmp/configurations-auto-updater_0.3.0_linux_amd64.tar.gz
 %{ endif ~}
   - mkdir -p /opt/coredns/zonefiles
   - chown -R coredns:coredns /opt/coredns/zonefiles
-  - chown -R coredns:coredns /etc/coredns-auto-updater
-  - systemctl enable coredns-auto-updater
-  - systemctl start coredns-auto-updater
+  - chown -R coredns:coredns /etc/coredns-zonefiles-updater
+  - systemctl enable coredns-zonefiles-updater
+  - systemctl start coredns-zonefiles-updater
   #Setup coredns service
 %{ if install_dependencies ~}
   - curl -L https://github.com/Ferlab-Ste-Justine/ferlab-coredns/releases/download/v1.0.0/linux-amd64.zip --output linux-amd64.zip

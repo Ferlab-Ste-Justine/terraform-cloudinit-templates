@@ -77,7 +77,7 @@ write_files:
     content: |
       ${indent(6, etcd.client.key)}
 %{ endif ~}
-  - path: /etc/prometheus-auto-updater/configs.json
+  - path: /etc/prometheus-config-updater/configs.json
     owner: root:root
     permissions: "0440"
     content: |
@@ -103,8 +103,8 @@ write_files:
           "DirectoriesPermission": "0770",
           "NotificationCommand": ["/usr/local/bin/reload-prometheus-configs"]
       }
-  #Prometheus auto updater systemd configuration
-  - path: /etc/systemd/system/prometheus-auto-updater.service
+  #Prometheus config updater systemd configuration
+  - path: /etc/systemd/system/prometheus-config-updater.service
     owner: root:root
     permissions: "0444"
     content: |
@@ -115,14 +115,14 @@ write_files:
       StartLimitIntervalSec=0
 
       [Service]
-      Environment=CONFS_AUTO_UPDATER_CONFIG_FILE=/etc/prometheus-auto-updater/configs.json
+      Environment=CONFS_AUTO_UPDATER_CONFIG_FILE=/etc/prometheus-config-updater/configs.json
       User=prometheus
       Group=prometheus
       Type=simple
       Restart=always
       RestartSec=1
       WorkingDirectory=/opt
-      ExecStart=/usr/local/bin/configurations-auto-updater
+      ExecStart=/usr/local/bin/prometheus-config-updater
 
       [Install]
       WantedBy=multi-user.target
@@ -138,16 +138,16 @@ runcmd:
   - curl -L https://github.com/Ferlab-Ste-Justine/configurations-auto-updater/releases/download/v0.3.0/configurations-auto-updater_0.3.0_linux_amd64.tar.gz -o /tmp/configurations-auto-updater_0.3.0_linux_amd64.tar.gz
   - mkdir -p /tmp/configurations-auto-updater
   - tar zxvf /tmp/configurations-auto-updater_0.3.0_linux_amd64.tar.gz -C /tmp/configurations-auto-updater
-  - cp /tmp/configurations-auto-updater/configurations-auto-updater /usr/local/bin/configurations-auto-updater
+  - cp /tmp/configurations-auto-updater/configurations-auto-updater /usr/local/bin/prometheus-config-updater
   - rm -rf /tmp/configurations-auto-updater
   - rm -f /tmp/configurations-auto-updater_0.3.0_linux_amd64.tar.gz
   - mkdir /etc/prometheus
   - chown prometheus:prometheus /etc/prometheus
 %{ endif ~}
   - chown -R prometheus:prometheus /etc/etcd
-  - chown -R prometheus:prometheus /etc/prometheus-auto-updater
-  - systemctl enable prometheus-auto-updater
-  - systemctl start prometheus-auto-updater
+  - chown -R prometheus:prometheus /etc/prometheus-config-updater
+  - systemctl enable prometheus-config-updater
+  - systemctl start prometheus-config-updater
   #Setup prometheus service
 %{ if install_dependencies ~}
   - curl -L https://github.com/prometheus/prometheus/releases/download/v2.40.7/prometheus-2.40.7.linux-amd64.tar.gz --output prometheus.tar.gz
