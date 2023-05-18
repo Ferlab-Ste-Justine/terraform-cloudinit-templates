@@ -47,7 +47,7 @@ write_files:
       #!/bin/sh
       FLUENTBIT_STATUS=$(systemctl fluent-bit.service)
       if [ $FLUENTBIT_STATUS = "active" ]; then
-        sudo systemctl reload fluent-bit.service
+        systemctl reload fluent-bit.service
       fi
   - path: /etc/systemd/system/fluent-bit.service
     owner: root:root
@@ -64,6 +64,7 @@ write_files:
       EnvironmentFile=-/etc/sysconfig/fluent-bit
       EnvironmentFile=-/etc/default/fluent-bit
       ExecStart=/opt/fluent-bit/bin/fluent-bit --enable-hot-reload -c /etc/fluent-bit/fluent-bit.conf
+      ExecReload=/bin/kill -HUP $MAINPID
       Restart=always
 
       [Install]
@@ -172,6 +173,8 @@ runcmd:
   - mkdir -p /etc/fluent-bit-customization/dynamic-config
   - chmod 007 /etc/fluent-bit-customization/dynamic-config
   - cp /etc/fluent-bit-customization/default-config/fluent-bit-dynamic.conf /etc/fluent-bit/fluent-bit.conf
+  - systemctl enable fluent-bit-config-updater.service
+  - systemctl start fluent-bit-config-updater.service
 %{ else ~}
   - cp /etc/fluent-bit-customization/default-config/fluent-bit-static.conf /etc/fluent-bit/fluent-bit.conf
 %{ endif ~}
