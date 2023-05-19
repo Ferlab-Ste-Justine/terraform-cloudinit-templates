@@ -5,6 +5,13 @@ merge_how:
  - name: dict
    settings: [no_replace, recurse_list]
 
+%{ if install_dependencies ~}
+users:
+  - name: terraform-backend-etcd
+    system: true
+    lock_passwd: true
+%{ endif ~}
+
 write_files:
   - path: /etc/terraform-backend-etcd/terraform/backend-vars
     owner: root:root
@@ -101,8 +108,8 @@ write_files:
 
       [Service]
       Environment=ETCD_BACKEND_CONFIG_FILE=/etc/terraform-backend-etcd/config.yml
-      User=root
-      Group=root
+      User=terraform-backend-etcd
+      Group=terraform-backend-etcd
       Type=simple
       Restart=always
       RestartSec=1
@@ -129,5 +136,6 @@ runcmd:
 %{ endif ~}
   - cp /etc/terraform-backend-etcd/tls/ca.crt /usr/local/share/ca-certificates
   - update-ca-certificates
+  - chown -R terraform-backend-etcd:terraform-backend-etcd /etc/terraform-backend-etcd
   - systemctl enable terraform-backend-etcd
   - systemctl start terraform-backend-etcd
