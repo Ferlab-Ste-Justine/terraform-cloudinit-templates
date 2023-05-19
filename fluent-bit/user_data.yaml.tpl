@@ -5,6 +5,15 @@ merge_how:
  - name: dict
    settings: [no_replace, recurse_list]
 
+%{ if install_dependencies ~}
+users:
+  - name: fluentbit
+    system: true
+    lock_passwd: true
+    groups: systemd-journal
+    sudo: "ALL= NOPASSWD: /bin/systemctl reload fluent-bit.service"
+%{ endif ~}
+
 write_files:
   - path: /etc/fluent-bit-customization/forward_ca.crt
     owner: root:root
@@ -47,7 +56,7 @@ write_files:
       #!/bin/sh
       FLUENTBIT_STATUS=$(systemctl is-active fluent-bit.service)
       if [ $FLUENTBIT_STATUS = "active" ]; then
-        systemctl reload fluent-bit.service
+        sudo systemctl reload fluent-bit.service
       fi
   - path: /etc/systemd/system/fluent-bit.service
     owner: root:root
@@ -60,6 +69,8 @@ write_files:
       After=network.target
 
       [Service]
+      User=fluentbit
+      Group=fluentbit
       Type=simple
       EnvironmentFile=-/etc/sysconfig/fluent-bit
       EnvironmentFile=-/etc/default/fluent-bit
@@ -133,8 +144,8 @@ write_files:
 
       [Service]
       Environment=CONFS_AUTO_UPDATER_CONFIG_FILE=/etc/fluent-bit-config-updater/config.yml
-      User=root
-      Group=root
+      User=fluentbit
+      Group=fluentbit
       Type=simple
       Restart=always
       RestartSec=1
@@ -168,15 +179,22 @@ runcmd:
 %{ endif ~}
 %{ endif ~}
   - mkdir -p /var/lib/fluent-bit/systemd-db
-  - chmod 007 /var/lib/fluent-bit/systemd-db
+  - chmod 700 /var/lib/fluent-bit/systemd-db
 %{ if etcd.enabled ~}
   - mkdir -p /etc/fluent-bit-customization/dynamic-config
-  - chmod 007 /etc/fluent-bit-customization/dynamic-config
+  - chmod 700 /etc/fluent-bit-customization/dynamic-config
   - cp /etc/fluent-bit-customization/default-config/fluent-bit-dynamic.conf /etc/fluent-bit/fluent-bit.conf
+  - chown -R fluentbit:fluentbit /etc/fluent-bit-customization
+  - chown -R fluentbit:fluentbit /etc/fluent-bit
+  - chown -R fluentbit:fluentbit /var/lib/fluent-bit
+  - chown -R fluentbit:fluentbit /etc/fluent-bit-config-updater
   - systemctl enable fluent-bit-config-updater.service
   - systemctl start fluent-bit-config-updater.service
 %{ else ~}
   - cp /etc/fluent-bit-customization/default-config/fluent-bit-static.conf /etc/fluent-bit/fluent-bit.conf
+  - chown -R fluentbit:fluentbit /etc/fluent-bit-customization
+  - chown -R fluentbit:fluentbit /etc/fluent-bit
+  - chown -R fluentbit:fluentbit /var/lib/fluent-bit
 %{ endif ~}
   - systemctl enable fluent-bit.service
   - systemctl start fluent-bit.service
