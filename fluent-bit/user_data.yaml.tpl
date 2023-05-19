@@ -45,7 +45,7 @@ write_files:
     permissions: "0555"
     content: |
       #!/bin/sh
-      FLUENTBIT_STATUS=$(systemctl fluent-bit.service)
+      FLUENTBIT_STATUS=$(systemctl is-active fluent-bit.service)
       if [ $FLUENTBIT_STATUS = "active" ]; then
         systemctl reload fluent-bit.service
       fi
@@ -98,7 +98,7 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
-      NotificationCommand: ["/usr/local/bin/reload-fluent-bit-configs"]
+      notification_command: ["/usr/local/bin/reload-fluent-bit-configs"]
       filesystem:
         path: "/etc/fluent-bit-customization/dynamic-config"
         files_permission: "700"
