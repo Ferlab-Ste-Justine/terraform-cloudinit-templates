@@ -57,29 +57,44 @@ write_files:
       [Install]
       WantedBy=multi-user.target
 #systemd-remote-source
+  - path: /etc/systemd-remote-source/tls/ca.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, client.tls.ca_certificate)}
+  - path: /etc/systemd-remote-source/tls/client.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, client.tls.client_certificate)}
+  - path: /etc/systemd-remote-source/tls/client.key
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, client.tls.client_key)}
   - path: /etc/systemd-remote-source/etcd/ca.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, etcd.ca_certificate)}
-%{ if etcd.client.certificate != "" ~}
+      ${indent(6, client.etcd.ca_certificate)}
+%{ if client.etcd.client.certificate != "" ~}
   - path: /etc/systemd-remote-source/etcd/client.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, etcd.client.certificate)}
+      ${indent(6, client.etcd.client.certificate)}
   - path: /etc/systemd-remote-source/etcd/client.key
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, etcd.client.key)}
+      ${indent(6, client.etcd.client.key)}
 %{ else ~}
   - path: /etc/systemd-remote-source/etcd/password.yml
     owner: root:root
     permissions: "0400"
     content: |
-      username: ${etcd.client.username}
-      password: ${etcd.client.password}
+      username: ${client.etcd.client.username}
+      password: ${client.etcd.client.password}
 %{ endif ~}
   - path: /etc/systemd-remote-source/config.yml
     owner: root:root
@@ -90,9 +105,9 @@ write_files:
         files_permission: "700"
         directories_permission: "700"
       etcd_client:
-        prefix: "${etcd.key_prefix}"
+        prefix: "${client.etcd.key_prefix}"
         endpoints:
-%{ for endpoint in etcd.endpoints ~}
+%{ for endpoint in client.etcd.endpoints ~}
           - "${endpoint}"
 %{ endfor ~}
         connection_timeout: "60s"
@@ -101,7 +116,7 @@ write_files:
         retries: 15
         auth:
           ca_cert: "/etc/systemd-remote-source/etcd/ca.crt"
-%{ if etcd.client.certificate != "" ~}
+%{ if client.etcd.client.certificate != "" ~}
           client_cert: "/etc/systemd-remote-source/etcd/client.crt"
           client_key: "/etc/systemd-remote-source/etcd/client.key"
 %{ else ~}
@@ -117,9 +132,9 @@ write_files:
           retry_interval: "4s"
           retries: 15
           auth:
-            ca_cert: "/etc/systemd-remote/tls/ca.crt"
-            client_cert: "/etc/systemd-remote/tls/service.crt"
-            client_key: "/etc/systemd-remote/tls/service.key"
+            ca_cert: "/etc/systemd-remote-source/tls/ca.crt"
+            client_cert: "/etc/systemd-remote-source/tls/service.crt"
+            client_key: "/etc/systemd-remote-source/tls/service.key"
   - path: /etc/systemd/system/systemd-remote-source.service
     owner: root:root
     permissions: "0444"

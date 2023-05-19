@@ -8,24 +8,27 @@ variable "server" {
       server_certificate = string
       server_key         = string
     })
-    auth    = object({
-      username = string
-      password = string
-    })
   })
 }
 
-variable "etcd" {
-  description = "Parameters for the etcd connection to fetch the configurations"
-  type        = object({
-    key_prefix = string
-    endpoints = list(string)
-    ca_certificate = string
-    client = object({
-      certificate = string
-      key = string
-      username = string
-      password = string
+variable "client" {
+  description = "Parameters for the service that will push changes to systemd-remote"
+  type = object({
+    tls = object({
+      ca_certificate     = string
+      client_certificate = string
+      client_key         = string
+    })
+    etcd = object({
+      key_prefix = string
+      endpoints = list(string)
+      ca_certificate = string
+      client = object({
+        certificate = string
+        key = string
+        username = string
+        password = string
+      })
     })
   })
 }
