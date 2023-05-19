@@ -10,8 +10,8 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
-      TF_HTTP_USERNAME=${terraform_backend_etcd.auth.username}
-      TF_HTTP_PASSWORD=${terraform_backend_etcd.auth.password}
+      TF_HTTP_USERNAME=${server.auth.username}
+      TF_HTTP_PASSWORD=${server.auth.password}
       TF_HTTP_UPDATE_METHOD=PUT
       TF_HTTP_LOCK_METHOD=PUT
       TF_HTTP_UNLOCK_METHOD=DELETE
@@ -19,53 +19,53 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, terraform_backend_etcd.etcd.ca_certificate)}
-%{ if terraform_backend_etcd.etcd.client.certificate != "" ~}
+      ${indent(6, etcd.ca_certificate)}
+%{ if etcd.client.certificate != "" ~}
   - path: /etc/terraform-backend-etcd/etcd/client.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, terraform_backend_etcd.etcd.client.certificate)}
+      ${indent(6, etcd.client.certificate)}
   - path: /etc/terraform-backend-etcd/etcd/client.key
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, terraform_backend_etcd.etcd.client.key)}
+      ${indent(6, etcd.client.key)}
 %{ else ~}
   - path: /etc/terraform-backend-etcd/etcd/password.yml
     owner: root:root
     permissions: "0400"
     content: |
-      username: ${terraform_backend_etcd.etcd.client.username}
-      password: ${terraform_backend_etcd.etcd.client.password}
+      username: ${etcd.client.username}
+      password: ${etcd.client.password}
 %{ endif ~}
   - path: /etc/terraform-backend-etcd/tls/ca.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, terraform_backend_etcd.tls.ca_certificate)}
+      ${indent(6, server.tls.ca_certificate)}
   - path: /etc/terraform-backend-etcd/tls/server.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, terraform_backend_etcd.tls.server_certificate)}
+      ${indent(6, server.tls.server_certificate)}
   - path: /etc/terraform-backend-etcd/tls/server.key
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, terraform_backend_etcd.tls.server_key)}
+      ${indent(6, server.tls.server_key)}
   - path: /etc/terraform-backend-etcd/auth.yml
     owner: root:root
     permissions: "0400"
     content: |
-      ${terraform_backend_etcd.auth.username}: "${terraform_backend_etcd.auth.password}"
+      ${server.auth.username}: "${server.auth.password}"
   - path: /etc/terraform-backend-etcd/config.yml
     owner: root:root
     permissions: "0400"
     content: |
       server:
-        port: ${terraform_backend_etcd.port}
-        address: "${terraform_backend_etcd.address}"
+        port: ${server.port}
+        address: "${server.address}"
         basic_auth: /etc/terraform-backend-etcd/auth.yml
         tls:
           certificate: /etc/terraform-backend-etcd/tls/server.crt
@@ -73,7 +73,7 @@ write_files:
         debug_mode: false
       etcd_client:
         endpoints:
-%{ for endpoint in terraform_backend_etcd.etcd.endpoints ~}
+%{ for endpoint in etcd.endpoints ~}
           - "${endpoint}"
 %{ endfor ~}
         connection_timeout: "300s"
@@ -82,7 +82,7 @@ write_files:
         retries: 30
         auth:
           ca_cert: "/etc/terraform-backend-etcd/etcd/ca.crt"
-%{ if terraform_backend_etcd.etcd.client.certificate != "" ~}
+%{ if etcd.client.certificate != "" ~}
           client_cert: "/etc/terraform-backend-etcd/etcd/client.crt"
           client_key: "/etc/terraform-backend-etcd/etcd/client.key"
 %{ else ~}

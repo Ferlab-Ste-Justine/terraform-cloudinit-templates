@@ -11,25 +11,25 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, systemd_remote.tls.ca_certificate)}
+      ${indent(6, server.tls.ca_certificate)}
   - path: /etc/systemd-remote/tls/service.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, systemd_remote.tls.server_certificate)}
+      ${indent(6, server.tls.server_certificate)}
   - path: /etc/systemd-remote/tls/service.key
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, systemd_remote.tls.server_key)}
+      ${indent(6, server.tls.server_key)}
   - path: /etc/systemd-remote/config.yml
     owner: root:root
     permissions: "0400"
     content: |
       units_config_path: /etc/systemd-remote/units.yml
       server:
-        port: ${systemd_remote.port}
-        address: "${systemd_remote.address}"
+        port: ${server.port}
+        address: "${server.address}"
         tls:
           ca_cert: /etc/systemd-remote/tls/ca.crt
           server_cert: /etc/systemd-remote/tls/service.crt
@@ -39,7 +39,7 @@ write_files:
     permissions: "0444"
     content: |
       [Unit]
-      Description="Systemd Remote Update Service"
+      Description="Systemd Remote Service"
       Wants=network-online.target
       After=network-online.target
       StartLimitIntervalSec=0
@@ -51,7 +51,7 @@ write_files:
       Type=simple
       Restart=always
       RestartSec=1
-      WorkingDirectory=/opt/dynamic-configurations
+      WorkingDirectory=${sync_directory}
       ExecStart=/usr/local/bin/systemd-remote
 
       [Install]
@@ -61,38 +61,38 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, systemd_remote_source.etcd.ca_certificate)}
-%{ if systemd_remote_source.etcd.client.certificate != "" ~}
+      ${indent(6, etcd.ca_certificate)}
+%{ if etcd.client.certificate != "" ~}
   - path: /etc/systemd-remote-source/etcd/client.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, systemd_remote_source.etcd.client.certificate)}
+      ${indent(6, etcd.client.certificate)}
   - path: /etc/systemd-remote-source/etcd/client.key
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, systemd_remote_source.etcd.client.key)}
+      ${indent(6, etcd.client.key)}
 %{ else ~}
   - path: /etc/systemd-remote-source/etcd/password.yml
     owner: root:root
     permissions: "0400"
     content: |
-      username: ${systemd_remote_source.etcd.client.username}
-      password: ${systemd_remote_source.etcd.client.password}
+      username: ${etcd.client.username}
+      password: ${etcd.client.password}
 %{ endif ~}
   - path: /etc/systemd-remote-source/config.yml
     owner: root:root
     permissions: "0400"
     content: |
       filesystem:
-        path: "/opt/dynamic-configurations"
+        path: "${sync_directory}"
         files_permission: "700"
         directories_permission: "700"
       etcd_client:
-        prefix: "${systemd_remote_source.etcd.key_prefix}"
+        prefix: "${etcd.key_prefix}"
         endpoints:
-%{ for endpoint in systemd_remote_source.etcd.endpoints ~}
+%{ for endpoint in etcd.endpoints ~}
           - "${endpoint}"
 %{ endfor ~}
         connection_timeout: "60s"
@@ -101,14 +101,14 @@ write_files:
         retries: 15
         auth:
           ca_cert: "/etc/systemd-remote-source/etcd/ca.crt"
-%{ if systemd_remote_source.etcd.client.certificate != "" ~}
+%{ if etcd.client.certificate != "" ~}
           client_cert: "/etc/systemd-remote-source/etcd/client.crt"
           client_key: "/etc/systemd-remote-source/etcd/client.key"
 %{ else ~}
           password_auth: /etc/systemd-remote-source/etcd/password.yml
 %{ endif ~}
       grpc_notifications:
-        - endpoint: "${systemd_remote.address}:${systemd_remote.port}"
+        - endpoint: "${server.address}:${server.port}"
           filter: "^(.*[.]service)|(.*[.]timer)|(units.yml)$"
           trim_key_path: true
           max_chunk_size: 1048576
@@ -137,7 +137,7 @@ write_files:
       Type=simple
       Restart=always
       RestartSec=1
-      WorkingDirectory=/opt/dynamic-configurations
+      WorkingDirectory=${sync_directory}
       ExecStart=/usr/local/bin/systemd-remote-source
 
       [Install]
@@ -166,7 +166,7 @@ runcmd:
   - rm -rf /tmp/systemd-remote
   - rm -f /tmp/systemd-remote_0.1.0_linux_amd64.tar.gz
 %{ endif ~}
-  - mkdir -p /opt/dynamic-configurations
+  - mkdir -p ${sync_directory}
   - systemctl enable systemd-remote-source
   - systemctl start systemd-remote-source
   - systemctl enable systemd-remote
