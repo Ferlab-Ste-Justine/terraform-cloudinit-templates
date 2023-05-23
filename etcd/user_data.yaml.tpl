@@ -123,12 +123,12 @@ runcmd:
   - chown etcd:etcd -R /etc/etcd
 %{ if install_dependencies ~}
   #Install etcd service binaries
-  - wget -O /opt/etcd-v3.5.6-linux-amd64.tar.gz https://storage.googleapis.com/etcd/v3.5.6/etcd-v3.5.6-linux-amd64.tar.gz
+  - wget -O /opt/etcd-v3.5.9-linux-amd64.tar.gz https://storage.googleapis.com/etcd/v3.5.9/etcd-v3.5.9-linux-amd64.tar.gz
   - mkdir -p /opt/etcd
-  - tar xzvf /opt/etcd-v3.5.6-linux-amd64.tar.gz -C /opt/etcd
-  - cp /opt/etcd/etcd-v3.5.6-linux-amd64/etcd /usr/local/bin/etcd
-  - cp /opt/etcd/etcd-v3.5.6-linux-amd64/etcdctl /usr/local/bin/etcdctl
-  - rm -f /opt/etcd-v3.5.6-linux-amd64.tar.gz
+  - tar xzvf /opt/etcd-v3.5.9-linux-amd64.tar.gz -C /opt/etcd
+  - cp /opt/etcd/etcd-v3.5.9-linux-amd64/etcd /usr/local/bin/etcd
+  - cp /opt/etcd/etcd-v3.5.9-linux-amd64/etcdctl /usr/local/bin/etcdctl
+  - rm -f /opt/etcd-v3.5.9-linux-amd64.tar.gz
   - rm -rf /opt/etcd
 %{ endif ~}
   #Create etcd service data directory
