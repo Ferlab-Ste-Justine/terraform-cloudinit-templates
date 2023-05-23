@@ -133,8 +133,8 @@ write_files:
           retries: 15
           auth:
             ca_cert: "/etc/systemd-remote-source/tls/ca.crt"
-            client_cert: "/etc/systemd-remote-source/tls/service.crt"
-            client_key: "/etc/systemd-remote-source/tls/service.key"
+            client_cert: "/etc/systemd-remote-source/tls/client.crt"
+            client_key: "/etc/systemd-remote-source/tls/client.key"
   - path: /etc/systemd/system/systemd-remote-source.service
     owner: root:root
     permissions: "0444"
