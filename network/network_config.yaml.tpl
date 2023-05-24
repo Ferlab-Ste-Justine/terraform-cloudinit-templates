@@ -3,11 +3,17 @@ renderer: networkd
 ethernets:
 %{ for idx, val in network_interfaces ~}
   eth${idx}:
+%{ if val.ip != "" ~}
     dhcp4: no
+%{ else ~}
+    dhcp4: yes
+%{ endif ~}
     match:
       macaddress: ${val.mac}
+%{ if val.ip != "" ~}
     addresses:
       - ${val.ip}/${val.prefix_length}
+%{ endif ~}
 %{ if val.gateway != "" ~}
     gateway4: ${val.gateway}
 %{ endif ~}
