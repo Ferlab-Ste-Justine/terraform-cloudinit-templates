@@ -17,6 +17,22 @@ variable "dhcp" {
   }
 }
 
+variable "pxe" {
+  description = "Parameters for ipxe booting"
+  type = object({
+    enabled = bool
+    self_url = string
+    static_boot_script = string
+    boot_script_name = string
+  })
+  default = {
+    enabled = false
+    self_url = ""
+    static_boot_script = ""
+    boot_script_name = "ipxe-boot-script"
+  }
+}
+
 variable "install_dependencies" {
   description = "Whether to install all dependencies in cloud-init"
   type = bool

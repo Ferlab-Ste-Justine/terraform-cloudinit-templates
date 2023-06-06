@@ -11,8 +11,11 @@ write_files:
     permissions: "0644"
     content: |
       authoritative;
+%{ if pxe.enabled ~}
       allow bootp;
-      option architecture-type code 93 = unsigned integer 16;
+      allow booting;
+      option client-architecture code 93 = unsigned integer 16;
+%{ endif ~}
 
 %{ for network in dhcp.networks ~}
       subnet ${split("/", network.addresses).0} netmask ${cidrnetmask(network.addresses)} {
@@ -23,6 +26,16 @@ write_files:
         range ${network.range_start} ${network.range_end};
       }
 %{ endfor ~}
+
+%{ if pxe.enabled ~}
+      if exists user-class and option user-class = "iPXE" {
+        filename "http://${pxe.self_url}/${pxe.boot_script_name}";
+      } elsif option client-architecture = 00:00 {
+        filename "undionly.kpxe";
+      } else {
+        filename "ipxe.efi";
+      }
+%{ endif ~}
   - path: /etc/dhcp-customization/isc-dhcp-server
     owner: root:root
     permissions: "0644"
@@ -137,12 +150,21 @@ write_files:
           chown root:dhcpd /var/lib/dhcp /var/lib/dhcp/dhcpd.leases; \
           chmod 775 /var/lib/dhcp ; chmod 664 /var/lib/dhcp/dhcpd.leases; \
           exec dhcpd -user dhcpd -group dhcpd -f -4 -pf /run/dhcp-server/dhcpd.pid -cf $CONFIG_FILE $INTERFACESv4'
+%{ if pxe.static_boot_script != "" ~}
+  - path: /usr/share/nginx/html/${pxe.boot_script_name}
+    owner: root:root
+    permissions: "0444"
+    content: |
+      ${indent(6, pxe.static_boot_script)}
+%{ endif ~}
 
 %{ if install_dependencies ~}
 packages:
   - isc-dhcp-server
+%{ if pxe.enabled ~}
   - tftpd-hpa
   - nginx
+%{ endif ~}
 %{ endif ~}
 
 runcmd:
@@ -150,7 +172,11 @@ runcmd:
   - apparmor_parser -r /etc/apparmor.d/usr.sbin.dhcpd
   - systemctl start isc-dhcp-server.service
   - systemctl enable isc-dhcp-server.service
+%{ if pxe.enabled ~}
+  - curl https://boot.ipxe.org/undionly.kpxe -o /var/lib/tftpboot/undionly.kpxe
+  - curl https://boot.ipxe.org/ipxe.efi -o /var/lib/tftpboot/ipxe.efi
   - systemctl start tftpd-hpa.service
   - systemctl enable tftpd-hpa.service
   - systemctl start nginx.service
   - systemctl enable nginx.service
+%{ endif ~}

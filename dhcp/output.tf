@@ -4,6 +4,7 @@ output "configuration" {
     "${path.module}/user_data.yaml.tpl", 
     {
       dhcp                 = var.dhcp
+      pxe                  = var.pxe
       install_dependencies = var.install_dependencies
     }
   )
