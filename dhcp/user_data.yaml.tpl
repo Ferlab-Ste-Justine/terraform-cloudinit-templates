@@ -143,6 +143,8 @@ write_files:
       [Service]
       EnvironmentFile=/etc/dhcp-customization/isc-dhcp-server
       RuntimeDirectory=dhcp-server
+      Restart=always
+      RestartSec=1
       # The leases files need to be root:dhcpd even when dropping privileges
       ExecStart=/bin/sh -ec '\
           CONFIG_FILE=/etc/dhcp-customization/dhcpd.conf; \
@@ -151,7 +153,7 @@ write_files:
           chmod 775 /var/lib/dhcp ; chmod 664 /var/lib/dhcp/dhcpd.leases; \
           exec dhcpd -user dhcpd -group dhcpd -f -4 -pf /run/dhcp-server/dhcpd.pid -cf $CONFIG_FILE $INTERFACESv4'
 %{ if pxe.static_boot_script != "" ~}
-  - path: /usr/share/nginx/html/${pxe.boot_script_name}
+  - path: /var/www/html/${pxe.boot_script_name}
     owner: root:root
     permissions: "0444"
     content: |
