@@ -3,7 +3,11 @@ renderer: networkd
 ethernets:
 %{ for idx, val in network_interfaces ~}
   eth${idx}:
+%{ if val.interface != "" ~}
+    set-name: ${val.interface}
+%{ else ~}
     set-name: eth${idx}
+%{ endif ~}
 %{ if val.ip != "" ~}
     dhcp4: no
 %{ else ~}
