@@ -40,7 +40,7 @@ write_files:
       set -xe
 
 %{ for path in outgoing_sync.paths ~}
-      rclone ${outgoing_sync_rclone_args} sync ${path} s3:${outgoing_sync.bucket}${path}
+      rclone ${outgoing_sync_rclone_args} sync ${outgoing_sync.fs_base_path}${path} s3:${outgoing_sync.bucket}${path}
 %{ endfor ~}
   #Rclone Sync Systemd Configuration
   - path: /etc/systemd/system/s3-outgoing-sync.timer
@@ -84,7 +84,7 @@ write_files:
       set -xe
 
 %{ for path in incoming_sync.paths ~}
-      rclone sync ${incoming_sync_rclone_args} s3:${incoming_sync.bucket}${path} ${path}
+      rclone sync ${incoming_sync_rclone_args} s3:${incoming_sync.bucket}${path} ${incoming_sync.fs_base_path}${path}
 %{ endfor ~}
   #Rclone Sync Systemd Configuration
   - path: /etc/systemd/system/s3-incoming-sync.timer
