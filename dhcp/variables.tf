@@ -23,13 +23,13 @@ variable "pxe" {
     enabled = bool
     self_url = string
     static_boot_script = string
-    boot_script_name = string
+    boot_script_path = string
   })
   default = {
     enabled = false
     self_url = ""
     static_boot_script = ""
-    boot_script_name = "ipxe-boot-script"
+    boot_script_path = "ipxe-boot-script"
   }
 }
 

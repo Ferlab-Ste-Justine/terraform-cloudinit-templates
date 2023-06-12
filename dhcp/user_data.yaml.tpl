@@ -29,7 +29,7 @@ write_files:
 
 %{ if pxe.enabled ~}
       if exists user-class and option user-class = "iPXE" {
-        filename "http://${pxe.self_url}/${pxe.boot_script_name}";
+        filename "http://${pxe.self_url}/${pxe.boot_script_path}";
       } elsif option client-architecture = 00:00 {
         filename "undionly.kpxe";
       } else {
@@ -153,7 +153,7 @@ write_files:
           chmod 775 /var/lib/dhcp ; chmod 664 /var/lib/dhcp/dhcpd.leases; \
           exec dhcpd -user dhcpd -group dhcpd -f -4 -pf /run/dhcp-server/dhcpd.pid -cf $CONFIG_FILE $INTERFACESv4'
 %{ if pxe.static_boot_script != "" ~}
-  - path: /var/www/html/${pxe.boot_script_name}
+  - path: /var/www/html/${pxe.boot_script_path}
     owner: root:root
     permissions: "0444"
     content: |
