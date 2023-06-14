@@ -5,7 +5,7 @@ merge_how:
  - name: dict
    settings: [no_replace, recurse_list]
 
-%{ if install_dependencies ~}
+%{ if install_dependencies && proxy.enabled ~}
 users:
   - name: nfs-tunnel
     system: true
@@ -13,22 +13,23 @@ users:
 %{ endif ~}
 
 write_files:
+%{ if proxy.enabled ~}
   #Tls Certs
   - path: /etc/nfs-tunnel/certs/server.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, tls.server_cert)}
+      ${indent(6, proxy.tls.server_cert)}
   - path: /etc/nfs-tunnel/certs/server.key
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, tls.server_key)}
+      ${indent(6, proxy.tls.server_key)}
   - path: /etc/nfs-tunnel/certs/ca.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, tls.ca_cert)}
+      ${indent(6, proxy.tls.ca_cert)}
   #Envoy Config
   - path: /etc/nfs-tunnel/envoy/core.yml
     owner: root:root
@@ -69,6 +70,7 @@ write_files:
 
       [Install]
       WantedBy=multi-user.target
+%{ endif ~}
   #Nfs config file
   - path: /opt/nfs_exports
     owner: root:root
@@ -96,8 +98,10 @@ runcmd:
   - systemctl start netfilter-persistent.service
   - iptables -A INPUT -p tcp -s localhost --dport 111 -j ACCEPT
   - iptables -A INPUT -p tcp --dport 111 -j DROP
+%{ if proxy.enabled ~}
   - iptables -A INPUT -p tcp -s localhost --dport 2049 -j ACCEPT
   - iptables -A INPUT -p tcp --dport 2049 -j DROP
+%{ endif ~}
   - iptables-save > /etc/iptables/rules.v4
   - ip6tables-save > /etc/iptables/rules.v6
   #Finalize nfs setup
@@ -106,6 +110,7 @@ runcmd:
   - systemctl start nfs-kernel-server.service
   - systemctl enable nfs-kernel-server.service
   - exportfs -a
+%{ if proxy.enabled ~}
   #Setup envoy
 %{ if install_dependencies ~}
   - wget -O /usr/local/bin/envoy https://github.com/envoyproxy/envoy/releases/download/v1.25.1/envoy-1.25.1-linux-x86_64
@@ -114,3 +119,4 @@ runcmd:
   - chown -R nfs-tunnel:nfs-tunnel /etc/nfs-tunnel
   - systemctl enable nfs-tunnel-server
   - systemctl start nfs-tunnel-server
+%{ endif ~}

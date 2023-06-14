@@ -1,11 +1,29 @@
 variable "proxy" {
   description = "Parameters for proxy"
   type = object({
+    enabled         = bool
     server_name     = string
     max_connections = number
     idle_timeout    = string
     listening_port  = string
+    tls = object({
+      server_cert = string
+      server_key  = string
+      ca_cert     = string
+    })
   })
+  default = {
+    enabled = false
+    server_name = ""
+    max_connections = 0
+    idle_timeout = ""
+    listening_port = ""
+    tls = {
+      server_cert = ""
+      server_key = ""
+      ca_cert = ""
+    }
+  }
 }
 
 /*
@@ -21,17 +39,9 @@ variable "nfs_configs" {
     sync = bool
     subtree_check = bool
     no_root_squash = bool
+    allowed_ips = string
   }))
   default = []
-}
-
-variable "tls" {
-  description = "Tls parameters"
-  type = object({
-    server_cert = string
-    server_key  = string
-    ca_cert     = string
-  })
 }
 
 variable "install_dependencies" {

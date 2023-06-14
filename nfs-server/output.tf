@@ -32,7 +32,7 @@ output "configuration" {
     "${path.module}/user_data.yaml.tpl", 
     {
       install_dependencies      = var.install_dependencies
-      tls                       = var.tls
+      proxy                     = var.proxy
       envoy_config_core         = local.envoy_config_core
       envoy_config_listeners    = local.envoy_config_listeners
       envoy_config_clusters     = local.envoy_config_clusters
