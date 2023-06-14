@@ -175,6 +175,7 @@ runcmd:
   - systemctl start isc-dhcp-server.service
   - systemctl enable isc-dhcp-server.service
 %{ if pxe.enabled ~}
+  - mkdir -p /var/lib/tftpboot
   - curl https://boot.ipxe.org/undionly.kpxe -o /var/lib/tftpboot/undionly.kpxe
   - curl https://boot.ipxe.org/ipxe.efi -o /var/lib/tftpboot/ipxe.efi
   - systemctl start tftpd-hpa.service

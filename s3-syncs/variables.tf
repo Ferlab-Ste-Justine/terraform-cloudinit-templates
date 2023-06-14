@@ -13,14 +13,15 @@ variable "object_store" {
 variable "outgoing_sync" {
   description = "Object store parameters"
   type = object({
-    fs_base_path = string
     calendar     = string
     bucket       = string
-    paths        = list(string)
+    paths        = list(object({
+      fs = string
+      s3 = string
+    }))
     symlinks     = string
   })
   default = {
-    fs_base_path = ""
     calendar     = ""
     bucket       = ""
     paths        = []
@@ -36,15 +37,16 @@ variable "outgoing_sync" {
 variable "incoming_sync" {
   description = "Object store parameters"
   type = object({
-    fs_base_path = string
     sync_once    = bool
     calendar     = string
     bucket       = string
-    paths        = list(string)
+    paths        = list(object({
+      fs = string
+      s3 = string
+    }))
     symlinks     = string
   })
   default = {
-    fs_base_path = ""
     sync_once    = false
     calendar     = ""
     bucket       = ""
