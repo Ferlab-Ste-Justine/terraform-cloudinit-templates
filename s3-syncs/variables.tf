@@ -13,16 +13,19 @@ variable "object_store" {
 variable "outgoing_sync" {
   description = "Object store parameters"
   type = object({
-    calendar   = string
-    bucket     = string
-    paths      = list(string)
-    symlinks   = string
+    calendar     = string
+    bucket       = string
+    paths        = list(object({
+      fs = string
+      s3 = string
+    }))
+    symlinks     = string
   })
   default = {
-    calendar   = ""
-    bucket     = ""
-    paths      = []
-    symlinks   = "copy"
+    calendar     = ""
+    bucket       = ""
+    paths        = []
+    symlinks     = "copy"
   }
 
   validation {
@@ -34,18 +37,21 @@ variable "outgoing_sync" {
 variable "incoming_sync" {
   description = "Object store parameters"
   type = object({
-    sync_once  = bool
-    calendar   = string
-    bucket     = string
-    paths      = list(string)
-    symlinks   = string
+    sync_once    = bool
+    calendar     = string
+    bucket       = string
+    paths        = list(object({
+      fs = string
+      s3 = string
+    }))
+    symlinks     = string
   })
   default = {
-    sync_once  = false
-    calendar   = ""
-    bucket     = ""
-    paths      = []
-    symlinks   = "copy"
+    sync_once    = false
+    calendar     = ""
+    bucket       = ""
+    paths        = []
+    symlinks     = "copy"
   }
 
   validation {
