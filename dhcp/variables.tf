@@ -10,10 +10,14 @@ variable "dhcp" {
       range_start = string
       range_end   = string
     }))
+    default_lease_time = number
+    max_lease_time = number
   })
   default = {
     interfaces = []
     networks = []
+    default_lease_time = 7200
+    max_lease_time = 72000
   }
 }
 

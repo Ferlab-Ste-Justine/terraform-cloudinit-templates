@@ -16,6 +16,8 @@ write_files:
       allow booting;
       option client-architecture code 93 = unsigned integer 16;
 %{ endif ~}
+      default-lease-time ${dhcp.default_lease_time};
+      max-lease-time ${dhcp.max_lease_time};
 
 %{ for network in dhcp.networks ~}
       subnet ${split("/", network.addresses).0} netmask ${cidrnetmask(network.addresses)} {
