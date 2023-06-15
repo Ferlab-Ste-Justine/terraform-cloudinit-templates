@@ -35,6 +35,23 @@ write_files:
       username: ${etcd.auth.username}
       password: ${etcd.auth.password}
 %{ endif ~}
+%{ for idx, grpc_notification in grpc_notifications ~}
+  - path: /etc/${naming.service}/grpc/endpoint${idx}/ca.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, grpc_notification.auth.ca_cert)}
+  - path: /etc/${naming.service}/grpc/endpoint${idx}/client.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, grpc_notification.auth.client_cert)}
+  - path: /etc/${naming.service}/grpc/endpoint${idx}/client.key
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, grpc_notification.auth.client_key)}
+%{ endfor ~}
   - path: /etc/systemd/system/${naming.service}.service
     owner: root:root
     permissions: "0444"

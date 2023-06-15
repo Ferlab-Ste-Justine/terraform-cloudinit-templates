@@ -14,7 +14,6 @@ output "configuration" {
     {
       install_dependencies = var.install_dependencies
       corefile = local.corefile_conf
-      etcd = var.etcd
     }
   )
 }

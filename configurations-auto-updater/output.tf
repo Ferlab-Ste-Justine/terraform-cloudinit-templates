@@ -22,6 +22,7 @@ output "configuration" {
       user                 = var.user
       etcd                 = var.etcd
       filesystem           = var.filesystem
+      grpc_notifications   = var.grpc_notifications
       config               = local.config
     }
   )

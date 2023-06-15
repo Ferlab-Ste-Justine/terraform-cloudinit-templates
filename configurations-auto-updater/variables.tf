@@ -52,6 +52,9 @@ variable "grpc_notifications" {
     trim_key_path = bool
     max_chunk_size = number
     retries = number
+    retry_interval = string
+    request_timeout = string
+    connection_timeout = string
     auth = object({
       ca_cert = string
       client_cert = string

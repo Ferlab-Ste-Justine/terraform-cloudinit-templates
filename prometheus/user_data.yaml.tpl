@@ -60,80 +60,6 @@ write_files:
       if [ $PROMETHEUS_STATUS = "active" ]; then
         sudo systemctl reload prometheus.service
       fi
-  - path: /etc/prometheus-config-updater/etcd/ca.crt
-    owner: root:root
-    permissions: "0444"
-    content: |
-      ${indent(6, etcd.ca_certificate)}
-%{ if etcd.client.certificate != "" ~}
-  - path: /etc/prometheus-config-updater/etcd/client.crt
-    owner: root:root
-    permissions: "0444"
-    content: |
-      ${indent(6, etcd.client.certificate)}
-  - path: /etc/prometheus-config-updater/etcd/client.key
-    owner: root:root
-    permissions: "0440"
-    content: |
-      ${indent(6, etcd.client.key)}
-%{ else ~}
-  - path: /etc/prometheus-config-updater/etcd/password.yml
-    owner: root:root
-    permissions: "0400"
-    content: |
-      username: ${etcd.client.username}
-      password: ${etcd.client.password}
-%{ endif ~}
-  - path: /etc/prometheus-config-updater/configs.yml
-    owner: root:root
-    permissions: "0440"
-    content: |
-      notification_command: ["/usr/local/bin/reload-prometheus-configs"]
-      filesystem:
-        path: /etc/prometheus/configs/
-        files_permission: "0770"
-        directories_permission: "0770"
-      etcd_client:
-        prefix: "${etcd.key_prefix}"
-        endpoints:
-%{ for endpoint in etcd.endpoints ~}
-          - "${endpoint}"
-%{ endfor ~}
-        connection_timeout: "10s"
-        request_timeout: "10s"
-        retry_interval: "500ms"
-        retries: 10
-        auth:
-          ca_cert: "/etc/prometheus-config-updater/etcd/ca.crt"
-%{ if etcd.client.certificate != "" ~}
-          client_cert: "/etc/prometheus-config-updater/etcd/client.crt"
-          client_key: "/etc/prometheus-config-updater/etcd/client.key"
-%{ else ~}
-          password_auth: /etc/prometheus-config-updater/etcd/password.yml
-%{ endif ~}
-  #Prometheus config updater systemd configuration
-  - path: /etc/systemd/system/prometheus-config-updater.service
-    owner: root:root
-    permissions: "0444"
-    content: |
-      [Unit]
-      Description="Prometheus Configurations Updating Service"
-      Wants=network-online.target
-      After=network-online.target
-      StartLimitIntervalSec=0
-
-      [Service]
-      Environment=CONFS_AUTO_UPDATER_CONFIG_FILE=/etc/prometheus-config-updater/configs.yml
-      User=prometheus
-      Group=prometheus
-      Type=simple
-      Restart=always
-      RestartSec=1
-      WorkingDirectory=/opt
-      ExecStart=/usr/local/bin/prometheus-config-updater
-
-      [Install]
-      WantedBy=multi-user.target
 
 %{ if install_dependencies ~}
 packages:
@@ -141,20 +67,6 @@ packages:
 %{ endif ~}
 
 runcmd:
-  #Setup prometheus auto updater service
-%{ if install_dependencies ~}
-  - curl -L https://github.com/Ferlab-Ste-Justine/configurations-auto-updater/releases/download/v0.4.0/configurations-auto-updater_0.4.0_linux_amd64.tar.gz -o /tmp/configurations-auto-updater_0.4.0_linux_amd64.tar.gz
-  - mkdir -p /tmp/configurations-auto-updater
-  - tar zxvf /tmp/configurations-auto-updater_0.4.0_linux_amd64.tar.gz -C /tmp/configurations-auto-updater
-  - cp /tmp/configurations-auto-updater/configurations-auto-updater /usr/local/bin/prometheus-config-updater
-  - rm -rf /tmp/configurations-auto-updater
-  - rm -f /tmp/configurations-auto-updater_0.4.0_linux_amd64.tar.gz
-  - mkdir /etc/prometheus
-  - chown prometheus:prometheus /etc/prometheus
-%{ endif ~}
-  - chown -R prometheus:prometheus /etc/prometheus-config-updater
-  - systemctl enable prometheus-config-updater
-  - systemctl start prometheus-config-updater
   #Setup prometheus service
 %{ if install_dependencies ~}
   - curl -L https://github.com/prometheus/prometheus/releases/download/v2.44.0/prometheus-2.44.0.linux-amd64.tar.gz --output prometheus.tar.gz
