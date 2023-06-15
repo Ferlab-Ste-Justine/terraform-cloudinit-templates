@@ -16,8 +16,8 @@ variable "dhcp" {
   default = {
     interfaces = []
     networks = []
-    default_lease_time = 7200
-    max_lease_time = 72000
+    default_lease_time = 0
+    max_lease_time = 0
   }
 }
 
