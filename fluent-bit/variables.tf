@@ -3,22 +3,6 @@ variable "install_dependencies" {
   type        = bool
 }
 
-variable "etcd" {
-  description = "Parameters to connect to an optional etcd backend to auto update"
-  type        = object({
-    enabled = bool
-    key_prefix = string
-    endpoints = list(string)
-    ca_certificate = string
-    client = object({
-      certificate = string
-      key = string
-      username = string
-      password = string
-    })
-  })
-}
-
 variable "fluentbit" {
   description = "Fluent-bit configurations"
   sensitive   = true
@@ -39,4 +23,16 @@ variable "fluentbit" {
       ca_cert = string
     })
   })
+}
+
+variable "dynamic_config" {
+  description = "Settings for dynamic configuration"
+  type = object({
+    enabled         = bool
+    entrypoint_path = string
+  })
+  default = {
+    enabled         = false
+    entrypoint_path = ""
+  }
 }

@@ -26,8 +26,8 @@ output "configuration" {
     "${path.module}/user_data.yaml.tpl", 
     {
       install_dependencies   = var.install_dependencies
+      dynamic_config         = var.dynamic_config
       fluentbit              = var.fluentbit
-      etcd                   = var.etcd
       fluentbit_service_conf = local.fluentbit_service_conf
       fluentbit_inputs_conf  = local.fluentbit_inputs_conf
       fluentbit_output_conf  = local.fluentbit_output_conf
