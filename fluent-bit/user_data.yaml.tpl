@@ -96,7 +96,7 @@ runcmd:
 %{ endif ~}
   - mkdir -p /var/lib/fluent-bit/systemd-db
   - chmod 700 /var/lib/fluent-bit/systemd-db
-%{ if fluentbit.dynamic_config ~}
+%{ if dynamic_config.enabled ~}
   - cp /etc/fluent-bit-customization/default-config/fluent-bit-dynamic.conf /etc/fluent-bit/fluent-bit.conf
 %{ else ~}
   - cp /etc/fluent-bit-customization/default-config/fluent-bit-static.conf /etc/fluent-bit/fluent-bit.conf

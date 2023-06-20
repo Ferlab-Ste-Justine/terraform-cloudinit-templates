@@ -22,7 +22,6 @@ variable "fluentbit" {
       shared_key = string
       ca_cert = string
     })
-    dynamic_config = bool
   })
 }
 
