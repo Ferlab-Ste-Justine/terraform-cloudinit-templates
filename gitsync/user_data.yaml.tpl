@@ -88,12 +88,12 @@ packages:
 runcmd:
 %{ if install_dependencies ~}
   #Install gitsync
-  - curl -L https://github.com/Ferlab-Ste-Justine/gitsync/releases/download/v0.1.0/gitsync_0.1.0_linux_amd64.tar.gz -o /tmp/gitsync_0.1.0_linux_amd64.tar.gz
+  - curl -L https://github.com/Ferlab-Ste-Justine/gitsync/releases/download/v0.1.1/gitsync_0.1.1_linux_amd64.tar.gz -o /tmp/gitsync_0.1.1_linux_amd64.tar.gz
   - mkdir -p /tmp/gitsync
-  - tar zxvf /tmp/gitsync_0.1.0_linux_amd64.tar.gz -C /tmp/gitsync
+  - tar zxvf /tmp/gitsync_0.1.1_linux_amd64.tar.gz -C /tmp/gitsync
   - cp /tmp/gitsync/gitsync /usr/local/bin/${naming.binary}
   - rm -rf /tmp/gitsync
-  - rm -f /tmp/gitsync_0.1.0_linux_amd64.tar.gz
+  - rm -f /tmp/gitsync_0.1.1_linux_amd64.tar.gz
 %{ endif ~}
   - mkdir -p ${filesystem.path}
   - chown -R ${user}:${user} ${filesystem.path}
