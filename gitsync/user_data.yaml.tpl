@@ -22,7 +22,7 @@ write_files:
     content: |
       ${indent(6, git.auth.server_ssh_fingerprint)}
 %{ for idx, trusted_gpg_key in git.trusted_gpg_keys ~}
-  - path: /etc/${naming.service}/git/trusted_gpg_keys/key{idx}.asc
+  - path: /etc/${naming.service}/git/trusted_gpg_keys/key${idx}.asc
     owner: root:root
     permissions: "0400"
     content: |
