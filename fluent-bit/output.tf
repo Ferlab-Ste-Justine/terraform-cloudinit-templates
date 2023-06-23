@@ -1,18 +1,30 @@
 locals {
-  fluentbit_service_conf = templatefile(
+  fb_service_conf = templatefile(
     "${path.module}/fluent-bit-service.conf.tpl", 
     {
       fluentbit      = var.fluentbit
     }
   )
-  fluentbit_inputs_conf = templatefile(
+  fb_inputs_conf = templatefile(
     "${path.module}/fluent-bit-inputs.conf.tpl", 
     {
       fluentbit      = var.fluentbit
     }
   )
-  fluentbit_output_conf = templatefile(
-    "${path.module}/fluent-bit-output.conf.tpl", 
+  fb_default_variables_conf = templatefile(
+    "${path.module}/fluent-bit-default-variables.conf.tpl", 
+    {
+      fluentbit      = var.fluentbit
+    }
+  )
+  fb_output_all_conf = templatefile(
+    "${path.module}/fluent-bit-output-all.conf.tpl", 
+    {
+      fluentbit      = var.fluentbit
+    }
+  )
+  fb_output_default_sources_conf = templatefile(
+    "${path.module}/fluent-bit-output-default-sources.conf.tpl", 
     {
       fluentbit      = var.fluentbit
     }
@@ -25,12 +37,14 @@ output "configuration" {
   value = templatefile(
     "${path.module}/user_data.yaml.tpl", 
     {
-      install_dependencies   = var.install_dependencies
-      dynamic_config         = var.dynamic_config
-      fluentbit              = var.fluentbit
-      fluentbit_service_conf = local.fluentbit_service_conf
-      fluentbit_inputs_conf  = local.fluentbit_inputs_conf
-      fluentbit_output_conf  = local.fluentbit_output_conf
+      install_dependencies           = var.install_dependencies
+      dynamic_config                 = var.dynamic_config
+      fluentbit                      = var.fluentbit
+      fb_service_conf                = local.fb_service_conf
+      fb_inputs_conf                 = local.fb_inputs_conf
+      fb_default_variables_conf      = local.fb_default_variables_conf
+      fb_output_all_conf             = local.fb_output_all_conf
+      fb_output_default_sources_conf = local.fb_output_default_sources_conf
     }
   )
 }

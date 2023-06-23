@@ -1,0 +1,1 @@
+@SET output_forward_shared_key=${fluentbit.forward.shared_key}

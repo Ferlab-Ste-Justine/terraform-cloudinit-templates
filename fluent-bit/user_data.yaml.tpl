@@ -20,31 +20,43 @@ write_files:
     permissions: "0444"
     content: |
       ${indent(6, fluentbit.forward.ca_cert)}
-  - path: /etc/fluent-bit-customization/default-config/fluent-bit-service.conf
+  - path: /etc/fluent-bit-customization/default-config/default-variables.conf
     owner: root:root
     permissions: "0444"
     content: |
-      ${indent(6, fluentbit_service_conf)}
-  - path: /etc/fluent-bit-customization/default-config/fluent-bit-inputs.conf
+      ${indent(6, fb_default_variables_conf)}
+  - path: /etc/fluent-bit-customization/default-config/service.conf
     owner: root:root
     permissions: "0444"
     content: |
-      ${indent(6, fluentbit_inputs_conf)}
-  - path: /etc/fluent-bit-customization/default-config/fluent-bit-output.conf
+      ${indent(6, fb_service_conf)}
+  - path: /etc/fluent-bit-customization/default-config/inputs.conf
     owner: root:root
     permissions: "0444"
     content: |
-      ${indent(6, fluentbit_output_conf)}
-  - path: /etc/fluent-bit-customization/default-config/fluent-bit-static.conf
+      ${indent(6, fb_inputs_conf)}
+  - path: /etc/fluent-bit-customization/default-config/output-default-sources.conf
     owner: root:root
     permissions: "0444"
     content: |
-      @INCLUDE /etc/fluent-bit-customization/default-config/fluent-bit-service.conf
+      ${indent(6, fb_output_default_sources_conf)}
+  - path: /etc/fluent-bit-customization/default-config/output-all.conf
+    owner: root:root
+    permissions: "0444"
+    content: |
+      ${indent(6, fb_output_all_conf)}
+  - path: /etc/fluent-bit-customization/default-config/static.conf
+    owner: root:root
+    permissions: "0444"
+    content: |
+      @INCLUDE /etc/fluent-bit-customization/default-config/default-variables.conf
 
-      @INCLUDE /etc/fluent-bit-customization/default-config/fluent-bit-inputs.conf
+      @INCLUDE /etc/fluent-bit-customization/default-config/service.conf
 
-      @INCLUDE /etc/fluent-bit-customization/default-config/fluent-bit-output.conf
-  - path: /etc/fluent-bit-customization/default-config/fluent-bit-dynamic.conf
+      @INCLUDE /etc/fluent-bit-customization/default-config/inputs.conf
+
+      @INCLUDE /etc/fluent-bit-customization/default-config/output-all.conf
+  - path: /etc/fluent-bit-customization/default-config/dynamic.conf
     owner: root:root
     permissions: "0444"
     content: |
@@ -97,9 +109,9 @@ runcmd:
   - mkdir -p /var/lib/fluent-bit/systemd-db
   - chmod 700 /var/lib/fluent-bit/systemd-db
 %{ if dynamic_config.enabled ~}
-  - cp /etc/fluent-bit-customization/default-config/fluent-bit-dynamic.conf /etc/fluent-bit/fluent-bit.conf
+  - cp /etc/fluent-bit-customization/default-config/dynamic.conf /etc/fluent-bit/fluent-bit.conf
 %{ else ~}
-  - cp /etc/fluent-bit-customization/default-config/fluent-bit-static.conf /etc/fluent-bit/fluent-bit.conf
+  - cp /etc/fluent-bit-customization/default-config/static.conf /etc/fluent-bit/fluent-bit.conf
 %{ endif ~}
   - chown -R fluentbit:fluentbit /etc/fluent-bit-customization
   - chown -R fluentbit:fluentbit /etc/fluent-bit
