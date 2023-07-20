@@ -63,7 +63,7 @@ write_files:
       tls_client_config:
         cert_file: /etc/alertmanager/tls/server.crt
         key_file: /etc/alertmanager/tls/server.key
-        client_ca_file: /etc/alertmanager/tls/ca.crt
+        ca_file: /etc/alertmanager/tls/ca.crt
   - path: /etc/systemd/system/alertmanager.service
     owner: root:root
     permissions: "0440"
@@ -83,12 +83,18 @@ write_files:
       ExecStart=/usr/local/bin/alertmanager \
           --config.file=/etc/alertmanager/configs/alertmanager.yml \
           --storage.path=/var/lib/alertmanager/data \
+          --web.listen-address="0.0.0.0:9093" \
+%{ if length(alertmanager.cluster.peers) > 0 ~}
           --cluster.listen-address="0.0.0.0:9094" \
-          --web.config.file=/etc/alertmanager/web.yml \
           --cluster.tls-config=/etc/alertmanager/cluster.yml \
-%{ for peer in alertmanager.peers ~}
+%{ if alertmanager.cluster.advertise_address != "" ~}
+          --cluster.advertise-address="${alertmanager.cluster.advertise_address}:9094" \
+%{ endif ~}
+%{ for peer in alertmanager.cluster.peers ~}
           --cluster.peer="${peer}:9094" \
 %{ endfor ~}
+%{ endif ~}
+          --web.config.file=/etc/alertmanager/web.yml \
           --web.external-url=${alertmanager.external_url} \
           --data.retention=${alertmanager.data_retention} 
       ExecReload=/bin/kill -HUP $MAINPID

@@ -8,7 +8,10 @@ variable "alertmanager" {
   type = object({
     external_url = string
     data_retention = string
-    peers = list(string)
+    cluster = object({
+      peers = list(string)
+      advertise_address = string
+    })
     tls = object({
       ca_cert     = string
       server_cert = string
