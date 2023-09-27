@@ -65,9 +65,9 @@ write_files:
 
 runcmd:
 %{ if install_dependencies ~}
-  - wget https://dl.min.io/server/minio/release/linux-amd64/minio_20230609073212.0.0_amd64.deb
-  - dpkg -i minio_20230609073212.0.0_amd64.deb
-  - rm minio_20230609073212.0.0_amd64.deb
+  - wget https://dl.min.io/server/minio/release/linux-amd64/archive/minio.RELEASE.2023-09-23T03-47-50Z
+  - mv minio.RELEASE.2023-09-23T03-47-50Z /usr/local/bin/minio
+  - chmod +x /usr/local/bin/minio
 %{ endif ~}
   - chown -R minio:minio /etc/minio
   - chown -R minio:minio ${minio_server.volumes_root}
