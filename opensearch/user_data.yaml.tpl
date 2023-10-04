@@ -29,7 +29,6 @@ write_files:
     permissions: "0400"
     content: |
       ${indent(6, tls.ca_cert)}
-%{ if opensearch_host.bootstrap_security ~}
   - path: /etc/opensearch/client-certs/admin.crt
     owner: root:root
     permissions: "0400"
@@ -40,18 +39,19 @@ write_files:
     permissions: "0400"
     content: |
       ${indent(6, tls.admin_key)}
-%{ endif ~}
   - path: /usr/local/bin/bootstrap_opensearch
     owner: root:root
     permissions: "0555"
     content: |
       #!/bin/bash
-      echo "Waiting for server to join cluster with green status before bootstraping security"
+
+      echo "Waiting for server to join cluster with green status
       STATUS=$(curl --silent --cert /etc/opensearch/client-certs/admin.crt --key /etc/opensearch/client-certs/admin.key --cacert /etc/opensearch/ca-certs/ca.crt https://${opensearch_host.bind_ip}:9200/_cluster/health | jq ".status")
       while [ "$STATUS" != "\"green\"" ]; do
           sleep 1
           STATUS=$(curl --silent --cert /etc/opensearch/client-certs/admin.crt --key /etc/opensearch/client-certs/admin.key --cacert /etc/opensearch/ca-certs/ca.crt https://${opensearch_host.bind_ip}:9200/_cluster/health | jq ".status")
       done
+
 %{ if opensearch_host.bootstrap_security ~}
       echo "Bootstraping opensearch security"
       export JAVA_HOME=/opt/opensearch/jdk
@@ -62,6 +62,7 @@ write_files:
         -key /etc/opensearch/client-certs/admin-key-pk8.pem \
         -cacert /etc/opensearch/ca-certs/ca.crt \
         -t config
+
 %{ endif ~}
       echo "Swaping bootstrap configuration for runtime configuration"
       cp /etc/opensearch/runtime-configuration/opensearch.yml /etc/opensearch/configuration/opensearch.yml
