@@ -45,7 +45,7 @@ write_files:
     content: |
       #!/bin/bash
 
-      echo "Waiting for server to join cluster with green status
+      echo "Waiting for server to join cluster with green status"
       STATUS=$(curl --silent --cert /etc/opensearch/client-certs/admin.crt --key /etc/opensearch/client-certs/admin.key --cacert /etc/opensearch/ca-certs/ca.crt https://${opensearch_host.bind_ip}:9200/_cluster/health | jq ".status")
       while [ "$STATUS" != "\"green\"" ]; do
           sleep 1
