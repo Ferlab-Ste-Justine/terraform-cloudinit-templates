@@ -29,6 +29,23 @@ write_files:
     permissions: "0400"
     content: |
       ${indent(6, minio_server.tls.server_key)}
+%{ if kes.endpoint != "" ~}
+  - path: /etc/minio/kes/tls/client.key
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, kes.tls.client_key)}
+  - path: /etc/minio/kes/tls/client.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, kes.tls.client_cert)}
+  - path: /etc/minio/kes/tls/ca.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, kes.tls.ca_cert)}
+%{ endif ~}
   #minio systemd configuration
   - path: /etc/minio/env
     owner: root:root
@@ -40,6 +57,13 @@ write_files:
       MINIO_ROOT_PASSWORD="${minio_server.auth.root_password}"
 %{ if minio_server.load_balancer_url != "" ~}
       MINIO_SERVER_URL="${minio_server.load_balancer_url}"
+%{ endif ~}
+%{ if kes.endpoint != "" ~}
+      MINIO_KMS_KES_ENDPOINT=https://${kes.endpoint}
+      MINIO_KMS_KES_CERT_FILE=/etc/minio/kes/tls/client.crt
+      MINIO_KMS_KES_KEY_FILE=/etc/minio/kes/tls/client.key
+      MINIO_KMS_KES_CAPATH=/etc/minio/kes/tls/ca.crt
+      MINIO_KMS_KES_KEY_NAME=${kes.key}
 %{ endif ~}
   - path: /etc/systemd/system/minio.service
     owner: root:root

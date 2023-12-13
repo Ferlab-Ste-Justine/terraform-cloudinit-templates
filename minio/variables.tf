@@ -17,6 +17,28 @@ variable "minio_server" {
   })
 }
 
+variable "kes" {
+  description = "Optional parameters for minio to use kes"
+  type = object({
+    endpoint = string
+    tls = object({
+      client_cert = string
+      client_key = string
+      ca_cert = string
+    })
+    key = string
+  })
+  default = {
+    endpoint = ""
+    tls = {
+      client_cert = ""
+      client_key = ""
+      ca_cert = ""
+    }
+    key = ""
+  }
+}
+
 variable "volume_pools" {
   description = "Minio volume pools"
   type = list(object({

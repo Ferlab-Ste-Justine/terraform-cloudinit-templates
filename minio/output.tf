@@ -11,7 +11,8 @@ output "configuration" {
     {
       install_dependencies = var.install_dependencies
       minio_server         = var.minio_server
-      volume_pools        = local.volume_pools
+      kes                  = var.kes
+      volume_pools         = local.volume_pools
     }
   )
 }
