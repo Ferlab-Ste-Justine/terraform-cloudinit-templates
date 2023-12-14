@@ -81,7 +81,7 @@ write_files:
       RestartSec=1
       TimeoutStopSec=infinity
       SendSIGKILL=no
-      ExecStart=/usr/local/bin/kes server --config=/etc/kes/config.yaml
+      ExecStart=/usr/local/bin/kes server --config=/etc/kes/config.yml
 
       [Install]
       WantedBy=multi-user.target
