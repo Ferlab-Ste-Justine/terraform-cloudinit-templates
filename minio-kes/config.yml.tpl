@@ -28,6 +28,11 @@ policy:
 %{ for client in kes_server.clients ~}
   ${client.name}:
     allow:
+%{ if client.permissions.list_all ~}
+      - /v1/key/list/*
+%{ else ~}
+      - /v1/key/list/${client.key_prefix}*
+%{ endif ~}
 %{ if client.permissions.create ~}
       - /v1/key/create/${client.key_prefix}*
 %{ endif ~}

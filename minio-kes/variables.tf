@@ -11,6 +11,7 @@ variable "kes_server" {
       name = string
       key_prefix = string
       permissions = object({
+        list_all = bool
         create   = bool
         delete   = bool
         generate = bool
