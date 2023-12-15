@@ -59,6 +59,6 @@ keystore:
       secret: ${keystore.vault.approle.secret}
       retry: ${keystore.vault.approle.retry_interval}
     tls:
-      ca: /opt/kes/certs/vault/ca.crt
+      ca: /etc/kes/certs/vault/ca.crt
     status:
       ping: ${keystore.vault.ping_interval}

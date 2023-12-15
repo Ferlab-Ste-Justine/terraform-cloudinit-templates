@@ -24,12 +24,12 @@ write_files:
     permissions: "0400"
     content: |
       ${indent(6, kes_server.tls.server_cert)}
-  - path: /opt/kes/certs/server.key
+  - path: /etc/kes/certs/server.key
     owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, kes_server.tls.server_key)}
-  - path: /opt/kes/certs/vault/ca.crt
+  - path: /etc/kes/certs/vault/ca.crt
     owner: root:root
     permissions: "0400"
     content: |
