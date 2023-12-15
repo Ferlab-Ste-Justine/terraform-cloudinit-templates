@@ -9,7 +9,7 @@ tls:
   key: /etc/kes/certs/server.key
   cert: /etc/kes/certs/server.crt
   ca: /etc/kes/certs/ca.crt
-  auth: on
+  auth: off
 
 cache:
   expiry:
