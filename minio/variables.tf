@@ -39,8 +39,53 @@ variable "kes" {
   }
 }
 
+variable "ferio" {
+  description = "Ferio configurations"
+  type = object({
+    etcd         = object({
+      config_prefix      = string
+      workspace_prefix   = string
+      endpoints          = list(string)
+      connection_timeout = string
+      request_timeout    = string
+      retry_interval     = string
+      retries            = number
+      auth               = object({
+        ca_cert       = string
+        client_cert   = string
+        client_key    = string
+        username      = string
+        password      = string
+      })
+    })
+    host         = string
+    log_level    = string
+  })
+  default = {
+    etcd = {
+      config_prefix      = ""
+      workspace_prefix   = ""
+      endpoints          = []
+      connection_timeout = ""
+      request_timeout    = ""
+      retry_interval     = ""
+      retries            = 0
+      auth               = {
+        ca_cert     = ""
+        client_cert = ""
+        client_key  = ""
+        username    = ""
+        password    = ""
+      }
+    }
+    binaries_dir = ""
+    host         = ""
+    log_level    = ""
+  }
+}
+
 variable "volume_pools" {
-  description = "Minio volume pools"
+  description = "Minio volume pools, relevant if not using ferio"
   type = list(object({
     domain_template     = string
     servers_count_begin = number
@@ -48,6 +93,13 @@ variable "volume_pools" {
     mount_path_template = string
     mounts_count        = number
   }))
+  default = []
+}
+
+variable "minio_download_url" {
+  description = "Url to download minio from"
+  type = string
+  default = ""
 }
 
 variable "install_dependencies" {
