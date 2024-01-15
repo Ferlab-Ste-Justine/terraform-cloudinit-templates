@@ -12,6 +12,7 @@ output "configuration" {
       install_dependencies = var.install_dependencies
       minio_server         = var.minio_server
       kes                  = var.kes
+      prometheus_auth_type = var.prometheus_auth_type
       volume_pools         = local.volume_pools
       ferio                = var.ferio
       minio_download_url   = var.minio_download_url
