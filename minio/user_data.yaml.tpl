@@ -95,7 +95,9 @@ write_files:
       MINIO_KMS_KES_CAPATH=/etc/minio/kes/tls/ca.crt
       MINIO_KMS_KES_KEY_NAME=${kes.key}
 %{ endif ~}
+%{ if prometheus_auth_type != "" ~}
       MINIO_PROMETHEUS_AUTH_TYPE=${prometheus_auth_type}
+%{ endif ~}
 %{ if length(ferio.etcd.endpoints) > 0 ~}
   #Ferio config and unit file
   - path: /etc/ferio/config.yml

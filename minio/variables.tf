@@ -42,7 +42,7 @@ variable "kes" {
 variable "prometheus_auth_type" {
   description = "Authentication mode for prometheus scraping endpoints"
   type        = string
-  default     = "jwt"
+  default     = ""
 }
 
 variable "ferio" {
