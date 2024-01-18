@@ -29,11 +29,13 @@ write_files:
     permissions: "0400"
     content: |
       ${indent(6, kes_server.tls.server_key)}
+%{ if keystore.vault.ca_cert != "" ~}
   - path: /etc/kes/certs/vault/ca.crt
     owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, keystore.vault.ca_cert)}
+%{ endif ~}
   - path: /etc/kes/config.yml
     owner: root:root
     permissions: "0400"
