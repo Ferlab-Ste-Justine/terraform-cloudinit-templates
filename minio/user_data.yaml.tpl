@@ -182,12 +182,12 @@ runcmd:
   - chown -R minio:minio ${minio_server.volumes_root}
 %{ if length(ferio.etcd.endpoints) > 0 ~}
 %{ if install_dependencies ~}
-  - wget https://github.com/Ferlab-Ste-Justine/ferio/releases/download/v0.1.0/ferio_0.1.0_linux_amd64.tar.gz -O /tmp/ferio_0.1.0_linux_amd64.tar.gz
+  - wget https://github.com/Ferlab-Ste-Justine/ferio/releases/download/v0.2.0/ferio_0.2.0_linux_amd64.tar.gz -O /tmp/ferio_0.2.0_linux_amd64.tar.gz
   - mkdir -p /tmp/ferio
-  - tar zxvf /tmp/ferio_0.1.0_linux_amd64.tar.gz -C /tmp/ferio
+  - tar zxvf /tmp/ferio_0.2.0_linux_amd64.tar.gz -C /tmp/ferio
   - cp /tmp/ferio/ferio /usr/local/bin/ferio
   - rm -rf /tmp/ferio
-  - rm -f /tmp/ferio_0.1.0_linux_amd64.tar.gz
+  - rm -f /tmp/ferio_0.2.0_linux_amd64.tar.gz
 %{ endif ~}
   - systemctl enable ferio
   - systemctl start ferio
