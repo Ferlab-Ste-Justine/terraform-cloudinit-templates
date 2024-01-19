@@ -82,7 +82,7 @@ write_files:
 %{ if volume_pools != "" ~}
       MINIO_VOLUMES=${volume_pools}
 %{ endif ~}
-      MINIO_OPTS="--address \":${minio_server.api_port}\" --console-address \":${minio_server.console_port}\""
+      MINIO_OPTS="--address \":${minio_server.api_port}\" --console-address \":${minio_server.console_port}\" --certs-dir /etc/minio/tls"
       MINIO_ROOT_USER="${minio_server.auth.root_username}"
       MINIO_ROOT_PASSWORD="${minio_server.auth.root_password}"
 %{ if minio_server.api_url != "" ~}
@@ -171,7 +171,7 @@ write_files:
       Type=simple
       Restart=always
       RestartSec=1
-      ExecStart=/usr/local/bin/minio server $MINIO_OPTS --certs-dir /etc/minio/tls
+      ExecStart=/usr/local/bin/minio server $MINIO_OPTS
 
       [Install]
       WantedBy=multi-user.target
