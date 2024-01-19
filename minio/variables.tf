@@ -13,7 +13,8 @@ variable "minio_server" {
       root_username = string
       root_password = string
     })
-    load_balancer_url = string
+    api_url      = string
+    console_url  = string
   })
 }
 
