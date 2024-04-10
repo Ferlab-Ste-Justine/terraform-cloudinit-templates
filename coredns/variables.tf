@@ -12,6 +12,10 @@ variable "dns" {
     zonefiles_reload_interval = string
     load_balance_records = bool
     alternate_dns_servers = list(string)
+    forwards = list(object({
+      domain_name = string,
+      dns_servers = list(string)
+    }))
   })
   default = {
     dns_bind_addresses = ["0.0.0.0"]
@@ -20,5 +24,6 @@ variable "dns" {
     zonefiles_reload_interval = "3s"
     load_balance_records = true
     alternate_dns_servers = []
+    forwards = []
   }
 }
