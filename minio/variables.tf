@@ -46,6 +46,12 @@ variable "prometheus_auth_type" {
   default     = ""
 }
 
+variable "godebug_settings" {
+  description = "Comma-separated list of settings for environment variable GODEBUG"
+  type        = string
+  default     = ""
+}
+
 variable "ferio" {
   description = "Ferio configurations"
   type = object({

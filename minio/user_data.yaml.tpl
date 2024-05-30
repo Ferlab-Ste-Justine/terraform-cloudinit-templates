@@ -101,6 +101,9 @@ write_files:
 %{ if prometheus_auth_type != "" ~}
       MINIO_PROMETHEUS_AUTH_TYPE=${prometheus_auth_type}
 %{ endif ~}
+%{ if godebug_settings != "" ~}
+      GODEBUG=${godebug_settings}
+%{ endif ~}
 %{ if length(ferio.etcd.endpoints) > 0 ~}
   #Ferio config and unit file
   - path: /etc/ferio/config.yml

@@ -13,6 +13,7 @@ output "configuration" {
       minio_server         = var.minio_server
       kes                  = var.kes
       prometheus_auth_type = var.prometheus_auth_type
+      godebug_settings     = var.godebug_settings
       volume_pools         = local.volume_pools
       ferio                = var.ferio
       minio_download_url   = var.minio_download_url
