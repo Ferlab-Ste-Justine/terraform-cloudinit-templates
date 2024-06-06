@@ -52,6 +52,11 @@ variable "godebug_settings" {
   default     = ""
 }
 
+variable "minio_os_uid" {
+  description = "Uid that the minio os user will run as"
+  type        = number
+}
+
 variable "ferio" {
   description = "Ferio configurations"
   type = object({

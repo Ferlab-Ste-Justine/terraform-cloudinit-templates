@@ -17,6 +17,7 @@ output "configuration" {
       volume_pools         = local.volume_pools
       ferio                = var.ferio
       minio_download_url   = var.minio_download_url
+      minio_os_uid         = var.minio_os_uid
     }
   )
 }

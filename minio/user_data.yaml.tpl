@@ -10,6 +10,7 @@ users:
   - name: minio
     system: True
     lock_passwd: True
+    uid: ${minio_os_uid}
 %{ endif ~}
 
 write_files:
@@ -182,7 +183,7 @@ write_files:
 
 runcmd:
   - chown -R minio:minio /etc/minio
-  - chown -R minio:minio ${minio_server.volumes_root}
+  - chown minio:minio ${minio_server.volumes_root}
 %{ if length(ferio.etcd.endpoints) > 0 ~}
 %{ if install_dependencies ~}
   - wget https://github.com/Ferlab-Ste-Justine/ferio/releases/download/v0.2.0/ferio_0.2.0_linux_amd64.tar.gz -O /tmp/ferio_0.2.0_linux_amd64.tar.gz
