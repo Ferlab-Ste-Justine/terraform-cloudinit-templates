@@ -15,6 +15,7 @@ variable "minio_server" {
     })
     api_url      = string
     console_url  = string
+    minio_os_uid = number
   })
 }
 
