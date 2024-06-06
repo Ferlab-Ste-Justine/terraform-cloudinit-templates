@@ -10,7 +10,7 @@ users:
   - name: minio
     system: True
     lock_passwd: True
-    uid: ${minio_server.minio_os_uid}
+    uid: ${minio_os_uid}
 %{ endif ~}
 
 write_files:

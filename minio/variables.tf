@@ -15,7 +15,6 @@ variable "minio_server" {
     })
     api_url      = string
     console_url  = string
-    minio_os_uid = number
   })
 }
 
@@ -51,6 +50,11 @@ variable "godebug_settings" {
   description = "Comma-separated list of settings for environment variable GODEBUG"
   type        = string
   default     = ""
+}
+
+variable "minio_os_uid" {
+  description = "Uid that the minio os user will run as"
+  type        = number
 }
 
 variable "ferio" {
