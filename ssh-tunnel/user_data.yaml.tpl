@@ -28,12 +28,20 @@ users:
       - "${tunnel.ssh.authorized_key}"
 
 write_files:
-  - path: /opt/tunnel_ssh_entry
+  - path: /etc/ssh/sshd_config.d/tunnel_ssh_entry.conf
     owner: root:root
-    permissions: "0444"
+    permissions: "0644"
     content: |
+%{ if ssh_host_key_rsa.public != "" ~}
+      HostKey /etc/ssh/ssh_host_rsa_key
+%{ else }
+      HostKey /etc/ssh/ssh_host_ecdsa_key
+%{ endif ~}
       Match User ${tunnel.ssh.user}
         AllowAgentForwarding no
         PermitTTY no
         X11Forwarding no
         PermitOpen ${join(" ", [for entry in tunnel.accesses: "${entry.host}:${entry.port}"])}
+
+runcmd:
+  - systemctl restart sshd
