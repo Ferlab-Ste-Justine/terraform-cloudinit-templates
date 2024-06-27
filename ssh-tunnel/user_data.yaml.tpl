@@ -44,4 +44,4 @@ write_files:
         PermitOpen ${join(" ", [for entry in tunnel.accesses: "${entry.host}:${entry.port}"])}
 
 runcmd:
-  - mv /opt/tunnel_ssh_entry.conf /etc/ssh/ssh_config.d/tunnel_ssh_entry.conf
+  - mv /opt/tunnel_ssh_entry.conf /etc/ssh/sshd_config.d/tunnel_ssh_entry.conf
