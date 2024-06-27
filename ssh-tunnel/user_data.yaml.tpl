@@ -28,7 +28,7 @@ users:
       - "${tunnel.ssh.authorized_key}"
 
 write_files:
-  - path: /opt/tunnel_ssh_entry.conf
+  - path: /etc/ssh/sshd_config.d/tunnel_ssh_entry.conf
     owner: root:root
     permissions: "0644"
     content: |
@@ -44,4 +44,4 @@ write_files:
         PermitOpen ${join(" ", [for entry in tunnel.accesses: "${entry.host}:${entry.port}"])}
 
 runcmd:
-  - mv /opt/tunnel_ssh_entry.conf /etc/ssh/sshd_config.d/tunnel_ssh_entry.conf
+  - systemctl restart sshd
