@@ -37,3 +37,18 @@ frontend postgres_servers
   mode tcp
   bind *:5432
   default_backend postgres_servers
+
+backend patroni_servers
+  mode tcp
+  balance roundrobin
+  option httpchk
+  http-check connect port 4443 ssl
+  http-check send meth OPTIONS uri /master
+  http-check expect status 200
+  default-server inter 1000ms rise 1 fall 1
+  server-template patroni_nodes ${haproxy.postgres_nodes_max_count} ${haproxy.postgres_domain}:4443 check check-ssl verify required ca-file /opt/patroni/ca.pem crt /opt/patroni/client.pem resolvers internal_dns init-addr none
+
+frontend patroni_servers
+  mode tcp
+  bind *:4443
+  default_backend patroni_servers
