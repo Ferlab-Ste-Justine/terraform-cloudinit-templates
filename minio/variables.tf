@@ -3,7 +3,7 @@ variable "minio_server" {
   type = object({
     api_port     = number
     console_port = number
-    volumes_root = string
+    volumes_roots = list(string)
     tls          = object({
       server_cert = string
       server_key  = string

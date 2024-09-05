@@ -183,7 +183,9 @@ write_files:
 
 runcmd:
   - chown -R minio:minio /etc/minio
-  - chown minio:minio ${minio_server.volumes_root}
+%{ for vol_root in minio_server.volumes_roots ~}
+  - chown minio:minio ${vol_root}
+%{ endfor ~}
 %{ if length(ferio.etcd.endpoints) > 0 ~}
 %{ if install_dependencies ~}
   - wget https://github.com/Ferlab-Ste-Justine/ferio/releases/download/v0.2.0/ferio_0.2.0_linux_amd64.tar.gz -O /tmp/ferio_0.2.0_linux_amd64.tar.gz
