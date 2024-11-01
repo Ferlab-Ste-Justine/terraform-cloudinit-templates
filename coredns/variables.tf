@@ -18,7 +18,7 @@ variable "dns" {
     }))
     cache_settings    = list(object({
       domain_name     = string,
-      cache_duration  = number 
+      success_capacity  = number 
       prefetch        = number
     }))
   })

@@ -6,16 +6,18 @@
         directory /opt/coredns/zonefiles (.*) {1}
         reload ${dns.zonefiles_reload_interval}
     }
+
 %{ for forward in dns.forwards ~}
     forward ${forward.domain_name} ${join(" ", forward.dns_servers)}
+%{ endfor ~}
+
 %{ for cache in dns.cache_settings ~}
-%{ if cache.domain_name == forward.domain_name ~}
-    cache ${cache.cache_duration} {
+    cache ${cache.domain_name} {
+        success ${cache.success_capacity}
         prefetch ${cache.prefetch}
     }
-%{ endif ~}
 %{ endfor ~}
-%{ endfor ~}
+
 %{ if length(dns.alternate_dns_servers) > 0 ~}
     alternate original SERVFAIL . ${join(" ", [for server in dns.alternate_dns_servers: "${server}:53"])}
 %{ endif ~}
