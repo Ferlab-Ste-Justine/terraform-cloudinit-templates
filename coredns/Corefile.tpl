@@ -12,11 +12,10 @@
 %{ endfor ~}
 
 %{ if length(dns.cache_settings.domains) > 0 ~}
-# Bloc unique pour le cache, couvrant les domaines spécifiés
-cache ${dns.cache_settings.success_capacity} ${join(" ", dns.cache_settings.domains)} {
-    success ${dns.cache_settings.success_capacity}
-    prefetch ${dns.cache_settings.prefetch}
-}
+    cache ${dns.cache_settings.success_capacity} ${join(" ", dns.cache_settings.domains)} {
+        success ${dns.cache_settings.success_capacity}
+        prefetch ${dns.cache_settings.prefetch}
+    }
 %{ endif ~}
 
 %{ if length(dns.alternate_dns_servers) > 0 ~}
