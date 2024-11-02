@@ -11,12 +11,13 @@
     forward ${forward.domain_name} ${join(" ", forward.dns_servers)}
 %{ endfor ~}
 
-%{ for cache in dns.cache_settings ~}
-    cache ${cache.domain_name} {
-        success ${cache.success_capacity}
-        prefetch ${cache.prefetch}
-    }
-%{ endfor ~}
+%{ if length(dns.cache_settings.domains) > 0 ~}
+# Bloc unique pour le cache, couvrant les domaines spécifiés
+cache ${dns.cache_settings.success_capacity} ${join(" ", dns.cache_settings.domains)} {
+    success ${dns.cache_settings.success_capacity}
+    prefetch ${dns.cache_settings.prefetch}
+}
+%{ endif ~}
 
 %{ if length(dns.alternate_dns_servers) > 0 ~}
     alternate original SERVFAIL . ${join(" ", [for server in dns.alternate_dns_servers: "${server}:53"])}

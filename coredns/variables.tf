@@ -16,11 +16,11 @@ variable "dns" {
       domain_name = string,
       dns_servers = list(string)
     }))
-    cache_settings    = list(object({
-      domain_name     = string,
-      success_capacity  = number 
-      prefetch        = number
-    }))
+    cache_settings = object({
+      domains          = list(string)
+      success_capacity = number       
+      prefetch         = number        
+    })
   })
   default = {
     dns_bind_addresses = ["0.0.0.0"]
@@ -30,6 +30,10 @@ variable "dns" {
     load_balance_records = true
     alternate_dns_servers = []
     forwards = []
-    cache_settings             = []
+    cache_settings = {
+      domains          = []
+      success_capacity = 0
+      prefetch         = 0
+    }
   }
 }
