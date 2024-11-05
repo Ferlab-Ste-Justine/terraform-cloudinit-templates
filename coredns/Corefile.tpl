@@ -12,9 +12,10 @@
 %{ endfor ~}
 
 %{ if length(dns.cache_settings.domains) > 0 ~}
-    cache ${dns.cache_settings.success_capacity} ${join(" ", dns.cache_settings.domains)} {
-        success ${dns.cache_settings.success_capacity}
-        prefetch ${dns.cache_settings.prefetch}
+    cache ${dns.cache_settings.max_ttl} ${join(" ", dns.cache_settings.domains)} {
+%{ if dns.cache_settings.prefetch.amount != "" ~}
+        prefetch ${dns.cache_settings.prefetch.amount} ${dns.cache_settings.prefetch.duration}
+%{ endif ~}
     }
 %{ endif ~}
 
