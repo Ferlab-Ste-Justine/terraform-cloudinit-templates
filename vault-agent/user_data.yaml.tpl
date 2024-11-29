@@ -25,12 +25,14 @@ write_files:
     permissions: "0644"
     content: "${vault_agent.auth_method.config.secret_id}"
 
+%{ if vault_agent.vault_ca_cert != "" ~}
   # Vault Agent CA Certificate
   - path: /etc/vault-agent.d/tls/ca.crt
     owner: root:root
     permissions: "0440"
     content: |
       ${vault_agent.vault_ca_cert}
+%{ endif ~}
 
   # Vault Agent configuration
   - path: /etc/vault-agent.d/agent.hcl
@@ -58,7 +60,9 @@ write_files:
 
       vault {
         address = "${vault_agent.vault_address}"
+%{ if vault_agent.vault_ca_cert != "" ~}
         ca_cert = "/etc/vault-agent.d/tls/ca.crt"
+%{ endif ~}
       }
 
       auto_reload {
