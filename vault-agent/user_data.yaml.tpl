@@ -16,13 +16,13 @@ write_files:
   # Vault Agent Role ID
   - path: /etc/vault-agent.d/role-id
     owner: root:root
-    permissions: "0644"
+    permissions: "0600"
     content: "${vault_agent.auth_method.config.role_id}"
 
   # Vault Agent Secret ID
   - path: /etc/vault-agent.d/secret-id
     owner: root:root
-    permissions: "0644"
+    permissions: "0600"
     content: "${vault_agent.auth_method.config.secret_id}"
 
 %{ if vault_agent.vault_ca_cert != "" ~}
@@ -73,12 +73,14 @@ write_files:
       template {
         source      = "${template.source_path}"
         destination = "${template.destination_path}"
-        command     = "systemctl restart ${template.service_name}"
+%{ if template.command != "" ~}
+        command     = "${template.command}"
+%{ endif ~}
       }
 %{ endfor ~}
 
-%{ if vault_agent.agent_config != "" ~}
-      ${vault_agent.agent_config}
+%{ if vault_agent.extra_config != "" ~}
+      ${vault_agent.extra_config}
 %{ endif ~}
 
   # Vault Agent systemd service configuration
@@ -128,4 +130,3 @@ runcmd:
   - chown -R vault:vault /etc/vault-agent.d
   - systemctl enable vault-agent.service
   - systemctl start vault-agent.service
-  

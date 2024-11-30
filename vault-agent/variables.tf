@@ -6,7 +6,6 @@ variable "install_dependencies" {
 variable "vault_agent" {
   description = "Configuration for Vault Agent"
   type = object({
-    enabled             = bool
     auth_method         = object({
       type   = string
       config = object({
@@ -19,11 +18,25 @@ variable "vault_agent" {
     templates           = list(object({
       source_path      = string
       destination_path = string
-      service_name     = string
       secret_path      = string
       secret_key       = string
+      command          = string # Optional command for this template
     }))
-    agent_config        = string
+    extra_config        = string
     release_version     = string
   })
+  default = {
+    auth_method = {
+      type = "approle"
+      config = {
+        role_id   = ""
+        secret_id = ""
+      }
+    }
+    vault_address = ""
+    vault_ca_cert = ""
+    templates = []
+    extra_config = ""
+    release_version = "1.17.2"
+  }
 }

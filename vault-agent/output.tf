@@ -7,8 +7,8 @@ locals {
     vault_address   = var.vault_agent.vault_address
     vault_ca_cert   = indent(6, var.vault_agent.vault_ca_cert)
     templates       = var.vault_agent.templates
-    agent_config    = var.vault_agent.agent_config
-    release_version = var.vault_agent.release_version
+    extra_config    = var.vault_agent.extra_config
+    release_version = coalesce(var.vault_agent.release_version, "1.17.2") # Use default if missing
   }
 }
 
