@@ -43,7 +43,7 @@ write_files:
       pid_file = "/var/run/vault-agent.pid"
 
       auto_auth {
-        method "${vault_agent.auth_method.type}" {
+        method "approle" {
           config = {
             role_id_file_path = "/etc/vault-agent.d/role-id"
             secret_id_file_path = "/etc/vault-agent.d/secret-id"

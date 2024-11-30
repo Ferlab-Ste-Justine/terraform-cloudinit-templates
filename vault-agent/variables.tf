@@ -7,7 +7,6 @@ variable "vault_agent" {
   description = "Configuration for Vault Agent"
   type = object({
     auth_method         = object({
-      type   = string
       config = object({
         role_id   = string # Content of the role ID file
         secret_id = string # Content of the secret ID file
@@ -27,7 +26,6 @@ variable "vault_agent" {
   })
   default = {
     auth_method = {
-      type = "approle"
       config = {
         role_id   = ""
         secret_id = ""

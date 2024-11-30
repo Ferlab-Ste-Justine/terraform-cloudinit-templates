@@ -1,7 +1,6 @@
 locals {
   processed_vault_agent = {
     auth_method = {
-      type   = var.vault_agent.auth_method.type
       config = var.vault_agent.auth_method.config
     }
     vault_address   = var.vault_agent.vault_address
