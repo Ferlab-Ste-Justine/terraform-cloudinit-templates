@@ -35,7 +35,7 @@ write_files:
 %{ endif ~}
 
   # Vault Agent configuration
-  - path: /etc/vault-agent.d/agent.hcl
+  - path: /etc/vault-agent.d/main.hcl
     owner: root:root
     permissions: "0644"
     content: |
@@ -45,15 +45,15 @@ write_files:
       auto_auth {
         method "approle" {
           config = {
-            role_id_file_path = "/etc/vault-agent.d/role-id"
-            secret_id_file_path = "/etc/vault-agent.d/secret-id"
+            role_id_file_path = "${agent_config_path}/role-id"
+            secret_id_file_path = "${agent_config_path}/secret-id"
             remove_secret_id_file_after_reading = false
           }
         }
 
         sink "file" {
           config = {
-            path = "/etc/vault-agent.d/agent-token"
+            path = "${agent_config_path}/agent-token"
           }
         }
       }
@@ -61,27 +61,35 @@ write_files:
       vault {
         address = "${vault_agent.vault_address}"
 %{ if vault_agent.vault_ca_cert != "" ~}
-        ca_cert = "/etc/vault-agent.d/tls/ca.crt"
+        ca_cert = "${agent_config_path}/tls/ca.crt"
 %{ endif ~}
       }
 
       auto_reload {
         enabled = true
       }
+%{ if vault_agent.extra_config != "" ~}
+      ${vault_agent.extra_config}
+%{ endif ~}
 
-%{ for template in vault_agent.templates ~}
+
+%{ for template in external_templates ~}
+  - path: /etc/vault-agent.d/templates/${template.destination_path}.hcl
+    owner: root:root
+    permissions: "0644"
+    content: |
       template {
         source      = "${template.source_path}"
         destination = "${template.destination_path}"
+        {{- with secret "${template.secret_path}" -}}
+        {{- .Data.data.${template.secret_key} -}}
+        {{- end -}}
 %{ if template.command != "" ~}
         command     = "${template.command}"
 %{ endif ~}
       }
 %{ endfor ~}
 
-%{ if vault_agent.extra_config != "" ~}
-      ${vault_agent.extra_config}
-%{ endif ~}
 
   # Vault Agent systemd service configuration
   - path: /etc/systemd/system/vault-agent.service
@@ -94,7 +102,7 @@ write_files:
       After=network-online.target
 
       [Service]
-      ExecStart=/usr/local/bin/vault agent -config=/etc/vault-agent.d/agent.hcl
+      ExecStart=/usr/local/bin/vault agent -config=${agent_config_path}
       Restart=always
       RestartSec=5
       User=root
@@ -102,17 +110,6 @@ write_files:
 
       [Install]
       WantedBy=multi-user.target
-
-%{ for template in vault_agent.templates ~}
-  # Template content for ${template.source_path}
-  - path: ${template.source_path}
-    owner: root:root
-    permissions: "0644"
-    content: |
-      {{- with secret "${template.secret_path}" -}}
-      {{- .Data.data.${template.secret_key} -}}
-      {{- end -}}
-%{ endfor ~}
 
 %{ if install_dependencies ~}
 packages:

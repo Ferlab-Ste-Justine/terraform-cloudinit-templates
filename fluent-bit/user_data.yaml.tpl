@@ -15,6 +15,17 @@ users:
 %{ endif ~}
 
 write_files:
+%{ if vault_agent_integration.enabled ~}
+  - path: ${vault_agent_integration.agent_config_path}/templates/${vault_agent_integration.config_name_prefix}-fluentbit.hcl
+    owner: root:root
+    permissions: "0444"
+    content: |
+      template {
+        source      = "${vault_agent_integration.secret_path}"
+        destination = "/etc/fluent-bit/${vault_agent_integration.config_name_prefix}-config.conf"
+        command     = ""
+      }
+%{ endif ~}
   - path: /etc/fluent-bit-customization/forward_ca.crt
     owner: root:root
     permissions: "0444"

@@ -36,3 +36,19 @@ variable "dynamic_config" {
     entrypoint_path = ""
   }
 }
+
+variable "vault_agent_integration" {
+  description = "Configuration for integrating Fluent Bit with Vault Agent"
+  type = object({
+    enabled           = bool
+    secret_path       = string
+    agent_config_path = string
+    config_name_prefix = string
+  })
+  default = {
+    enabled           = false
+    secret_path       = ""
+    agent_config_path = "/etc/vault-agent.d"
+    config_name_prefix = "fluentbit"
+  }
+}

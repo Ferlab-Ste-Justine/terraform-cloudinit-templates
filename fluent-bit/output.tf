@@ -45,6 +45,7 @@ output "configuration" {
       fb_default_variables_conf      = local.fb_default_variables_conf
       fb_output_all_conf             = local.fb_output_all_conf
       fb_output_default_sources_conf = local.fb_output_default_sources_conf
+      vault_agent_integration        = var.vault_agent_integration
     }
   )
 }
