@@ -17,13 +17,14 @@ output "configuration" {
   value = templatefile(
     "${path.module}/user_data.yaml.tpl", 
     {
-      install_dependencies = var.install_dependencies
-      naming               = var.naming
-      user                 = var.user
-      etcd                 = var.etcd
-      filesystem           = var.filesystem
-      grpc_notifications   = var.grpc_notifications
-      config               = local.config
+      install_dependencies  = var.install_dependencies
+      naming                = var.naming
+      user                  = var.user
+      etcd                  = var.etcd
+      filesystem            = var.filesystem
+      grpc_notifications    = var.grpc_notifications
+      config                = local.config
+      vault_agent           = var.vault_agent
     }
   )
 }

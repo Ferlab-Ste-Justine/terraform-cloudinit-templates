@@ -6,6 +6,30 @@ merge_how:
    settings: [no_replace, recurse_list]
 
 write_files:
+%{ if vault_agent.etcd_auth.enabled ~}
+  - path: ${vault_agent.etcd_auth.agent_config_path}/templates/${vault_agent.etcd_auth.config_name_prefix}-etcd.hcl
+    owner: root:root
+    permissions: "0444"
+    content: |
+      template {
+        source      = "${vault_agent.etcd_auth.secret_path}"
+        destination = "/etc/${naming.service}/etcd/auth.yml"
+        command     = ""
+      }
+%{ endif ~}
+
+%{ if vault_agent.grpc_notifications_auth.enabled ~}
+  - path: ${vault_agent.grpc_notifications_auth.agent_config_path}/templates/${vault_agent.grpc_notifications_auth.config_name_prefix}-grpc.hcl
+    owner: root:root
+    permissions: "0444"
+    content: |
+      template {
+        source      = "${vault_agent.grpc_notifications_auth.secret_path}"
+        destination = "/etc/${naming.service}/grpc/auth.yml"
+        command     = ""
+      }
+%{ endif ~}
+
   - path: /etc/${naming.service}/config.yml
     owner: root:root
     permissions: "0400"

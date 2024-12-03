@@ -113,3 +113,42 @@ variable "install_dependencies" {
   
   default = true
 }
+
+variable "vault_agent" {
+  description = "Vault Agent integration"
+  type = object({
+    systemd_service = string
+
+    etcd_auth = object({
+      enabled           = bool
+      secret_path       = string
+      agent_config_path = string
+      config_name_prefix = string
+    })
+
+    grpc_notifications_auth = object({
+      enabled           = bool
+      secret_path       = string
+      agent_config_path = string
+      config_name_prefix = string
+    })
+  })
+
+  default = {
+    systemd_service = ""
+
+    etcd_auth = {
+      enabled           = false
+      secret_path       = ""
+      agent_config_path = ""
+      config_name_prefix = ""
+    }
+
+    grpc_notifications_auth = {
+      enabled           = false
+      secret_path       = ""
+      agent_config_path = ""
+      config_name_prefix = ""
+    }
+  }
+}
