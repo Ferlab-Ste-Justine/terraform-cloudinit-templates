@@ -42,9 +42,3 @@ variable "external_templates" {
   }))
   default = []
 }
-
-variable "agent_config_path" {
-  description = "Path to the directory where Vault Agent configuration files are stored"
-  type        = string
-  default     = "/etc/vault-agent.d"
-}

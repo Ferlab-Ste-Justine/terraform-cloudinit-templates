@@ -35,7 +35,7 @@ write_files:
 %{ endif ~}
 
   # Vault Agent configuration
-  - path: /etc/vault-agent.d/main.hcl
+  - path: /etc/vault-agent.d/config/main.hcl
     owner: root:root
     permissions: "0644"
     content: |
@@ -45,15 +45,15 @@ write_files:
       auto_auth {
         method "approle" {
           config = {
-            role_id_file_path = "${agent_config_path}/role-id"
-            secret_id_file_path = "${agent_config_path}/secret-id"
+            role_id_file_path = "/etc/vault-agent.d/role-id"
+            secret_id_file_path = "/etc/vault-agent.d/secret-id"
             remove_secret_id_file_after_reading = false
           }
         }
 
         sink "file" {
           config = {
-            path = "${agent_config_path}/agent-token"
+            path = "/etc/vault-agent.d/agent-token"
           }
         }
       }
@@ -61,7 +61,7 @@ write_files:
       vault {
         address = "${vault_agent.vault_address}"
 %{ if vault_agent.vault_ca_cert != "" ~}
-        ca_cert = "${agent_config_path}/tls/ca.crt"
+        ca_cert = "/etc/vault-agent.d/tls/ca.crt"
 %{ endif ~}
       }
 
@@ -71,25 +71,6 @@ write_files:
 %{ if vault_agent.extra_config != "" ~}
       ${vault_agent.extra_config}
 %{ endif ~}
-
-
-%{ for template in external_templates ~}
-  - path: /etc/vault-agent.d/templates/${template.destination_path}.hcl
-    owner: root:root
-    permissions: "0644"
-    content: |
-      template {
-        source      = "${template.source_path}"
-        destination = "${template.destination_path}"
-        {{- with secret "${template.secret_path}" -}}
-        {{- .Data.data.${template.secret_key} -}}
-        {{- end -}}
-%{ if template.command != "" ~}
-        command     = "${template.command}"
-%{ endif ~}
-      }
-%{ endfor ~}
-
 
   # Vault Agent systemd service configuration
   - path: /etc/systemd/system/vault-agent.service
@@ -102,7 +83,7 @@ write_files:
       After=network-online.target
 
       [Service]
-      ExecStart=/usr/local/bin/vault agent -config=${agent_config_path}
+      ExecStart=/usr/local/bin/vault agent -config=/etc/vault-agent.d/config/
       Restart=always
       RestartSec=5
       User=root

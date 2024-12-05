@@ -16,8 +16,7 @@ etcd_client:
   auth:
     ca_cert: "/etc/${naming.service}/etcd/ca.crt"
 %{ if etcd.auth.client_certificate != "" ~}
-    client_cert: "/etc/${naming.service}/etcd/client.crt"
-    client_key: "/etc/${naming.service}/etcd/client.key"
+    client_cert_key: "/etc/${naming.service}/etcd/client_cert_key.pem"
 %{ else ~}
     password_auth: /etc/${naming.service}/etcd/password.yml
 %{ endif ~}

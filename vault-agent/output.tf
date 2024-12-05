@@ -20,7 +20,6 @@ output "configuration" {
       install_dependencies = var.install_dependencies
       vault_agent          = local.processed_vault_agent
       external_templates   = local.all_templates
-      agent_config_path    = var.agent_config_path
     }
   )
 }
