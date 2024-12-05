@@ -15,7 +15,6 @@ variable "vault_agent" {
     vault_address   = string
     vault_ca_cert   = string
     extra_config    = string
-    release_version = string
   })
   default = {
     auth_method = {
@@ -27,6 +26,5 @@ variable "vault_agent" {
     vault_address   = ""
     vault_ca_cert   = ""
     extra_config    = ""
-    release_version = "1.17.2"
   }
 }
