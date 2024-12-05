@@ -30,15 +30,3 @@ variable "vault_agent" {
     release_version = "1.17.2"
   }
 }
-
-variable "external_templates" {
-  description = "List of templates provided by external services (e.g., Fluent Bit)"
-  type = list(object({
-    source_path      = string
-    destination_path = string
-    secret_path      = string
-    secret_key       = string
-    command          = optional(string, "")
-  }))
-  default = []
-}

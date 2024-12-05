@@ -16,6 +16,7 @@ write_files:
         source      = "/etc/${naming.service}/vault-agent/etcd/template.ctmpl"
         destination = "/etc/${naming.service}/vault-agent/etcd/client_cert_key.pem"
         exec        = "/etc/${naming.service}/vault-agent/etcd/reload.sh"
+        perms       = "0600"
       }
   - path: /etc/${naming.service}/vault-agent/etcd/template.ctmpl
     owner: root:root
@@ -45,6 +46,7 @@ write_files:
         source      = "/etc/${naming.service}/vault-agent/etcd/template.ctmpl"
         destination = "/etc/${naming.service}/vault-agent/etcd/password.yml"
         exec        = "/etc/${naming.service}/vault-agent/etcd/reload.sh"
+        perms       = "0600"
       }
   - path: /etc/${naming.service}/vault-agent/etcd/template.ctmpl
     owner: root:root
