@@ -14,17 +14,17 @@ users:
 
 write_files:
   #Etcd tls Certificates
-  - path: /opt/ca-cert.pem
+  - path: /etc/etcd/tls/ca.crt
     owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, tls.ca_cert)}
-  - path: /opt/cert.pem
+  - path: /etc/etcd/tls/etcd.crt
     owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, tls.server_cert)}
-  - path: /opt/key
+  - path: /etc/etcd/tls/etcd.key
     owner: root:root
     permissions: "0400"
     content: |
@@ -40,40 +40,40 @@ write_files:
       while [ "$ROOT_USER" != "root" ]; do
           sleep 1
 %{ if etcd_cluster.client_cert_auth ~}
-          etcdctl user add --no-password --cacert=/etc/etcd/tls/ca-cert.pem --cert=/etc/etcd/tls/cert.pem --key=/etc/etcd/tls/key --endpoints=https://127.0.0.1:2379 --insecure-transport=false root
-          ROOT_USER=$(etcdctl user list --cacert=/etc/etcd/tls/ca-cert.pem --cert=/etc/etcd/tls/cert.pem --key=/etc/etcd/tls/key --endpoints=https://127.0.0.1:2379 --insecure-transport=false | grep root)
+          etcdctl user add --no-password --cacert=/etc/etcd/tls/ca.crt --cert=/etc/etcd/tls/etcd.crt --key=/etc/etcd/tls/etcd.key --endpoints=https://127.0.0.1:2379 --insecure-transport=false root
+          ROOT_USER=$(etcdctl user list --cacert=/etc/etcd/tls/ca.crt --cert=/etc/etcd/tls/etcd.crt --key=/etc/etcd/tls/etcd.key --endpoints=https://127.0.0.1:2379 --insecure-transport=false | grep root)
 %{ else ~}
-          etcdctl user add --new-user-password="${etcd_cluster.root_password}" --cacert=/etc/etcd/tls/ca-cert.pem --endpoints=https://127.0.0.1:2379 --insecure-transport=false root
-          ROOT_USER=$(etcdctl user list --cacert=/etc/etcd/tls/ca-cert.pem --endpoints=https://127.0.0.1:2379 --insecure-transport=false | grep root)
+          etcdctl user add --new-user-password="${etcd_cluster.root_password}" --cacert=/etc/etcd/tls/ca.crt --endpoints=https://127.0.0.1:2379 --insecure-transport=false root
+          ROOT_USER=$(etcdctl user list --cacert=/etc/etcd/tls/ca.crt --endpoints=https://127.0.0.1:2379 --insecure-transport=false | grep root)
 %{ endif ~}
       done
       ROOT_ROLES=""
       while [ -z "$ROOT_ROLES" ]; do
           sleep 1
 %{ if etcd_cluster.client_cert_auth ~}
-          etcdctl user grant-role --cacert=/etc/etcd/tls/ca-cert.pem --cert=/etc/etcd/tls/cert.pem --key=/etc/etcd/tls/key --endpoints=https://127.0.0.1:2379 --insecure-transport=false root root
-          ROOT_ROLES=$(etcdctl user get --cacert=/etc/etcd/tls/ca-cert.pem --cert=/etc/etcd/tls/cert.pem --key=/etc/etcd/tls/key --endpoints=https://127.0.0.1:2379 --insecure-transport=false root | grep "Roles: root")
+          etcdctl user grant-role --cacert=/etc/etcd/tls/ca.crt --cert=/etc/etcd/tls/etcd.crt --key=/etc/etcd/tls/etcd.key --endpoints=https://127.0.0.1:2379 --insecure-transport=false root root
+          ROOT_ROLES=$(etcdctl user get --cacert=/etc/etcd/tls/ca.crt --cert=/etc/etcd/tls/etcd.crt --key=/etc/etcd/tls/etcd.key --endpoints=https://127.0.0.1:2379 --insecure-transport=false root | grep "Roles: root")
 %{ else ~}
-          etcdctl user grant-role --cacert=/etc/etcd/tls/ca-cert.pem --endpoints=https://127.0.0.1:2379 --insecure-transport=false root root
-          ROOT_ROLES=$(etcdctl user get --cacert=/etc/etcd/tls/ca-cert.pem --endpoints=https://127.0.0.1:2379 --insecure-transport=false root | grep "Roles: root")
+          etcdctl user grant-role --cacert=/etc/etcd/tls/ca.crt --endpoints=https://127.0.0.1:2379 --insecure-transport=false root root
+          ROOT_ROLES=$(etcdctl user get --cacert=/etc/etcd/tls/ca.crt --endpoints=https://127.0.0.1:2379 --insecure-transport=false root | grep "Roles: root")
 %{ endif ~}
       done
 %{ if etcd_cluster.client_cert_auth ~}
-      etcdctl auth enable --cacert=/etc/etcd/tls/ca-cert.pem --cert=/etc/etcd/tls/cert.pem --key=/etc/etcd/tls/key --endpoints=https://127.0.0.1:2379 --insecure-transport=false
+      etcdctl auth enable --cacert=/etc/etcd/tls/ca.crt --cert=/etc/etcd/tls/etcd.crt --key=/etc/etcd/tls/etcd.key --endpoints=https://127.0.0.1:2379 --insecure-transport=false
 %{ else ~}
-      etcdctl auth enable --cacert=/etc/etcd/tls/ca-cert.pem --endpoints=https://127.0.0.1:2379 --insecure-transport=false
+      etcdctl auth enable --cacert=/etc/etcd/tls/ca.crt --endpoints=https://127.0.0.1:2379 --insecure-transport=false
 %{ endif ~}
       while [ $? -ne 0 ]; do
           sleep 1
 %{ if etcd_cluster.client_cert_auth ~}
-          etcdctl auth enable --cacert=/etc/etcd/tls/ca-cert.pem --cert=/etc/etcd/tls/cert.pem --key=/etc/etcd/tls/key --endpoints=https://127.0.0.1:2379 --insecure-transport=false
+          etcdctl auth enable --cacert=/etc/etcd/tls/ca.crt --cert=/etc/etcd/tls/etcd.crt --key=/etc/etcd/tls/etcd.key --endpoints=https://127.0.0.1:2379 --insecure-transport=false
 %{ else ~}
-          etcdctl auth enable --cacert=/etc/etcd/tls/ca-cert.pem --endpoints=https://127.0.0.1:2379 --insecure-transport=false
+          etcdctl auth enable --cacert=/etc/etcd/tls/ca.crt --endpoints=https://127.0.0.1:2379 --insecure-transport=false
 %{ endif ~}
       done
 %{ endif ~}
   #Etcd configuration file
-  - path: /opt/conf.yml
+  - path: /etc/etcd/conf.yml
     owner: root:root
     permissions: "0400"
     content: |
@@ -90,16 +90,16 @@ write_files:
       initial-cluster-state: ${etcd_initial_cluster.state}
       initial-cluster: ${etcd_initial_cluster.members}
       peer-transport-security:
-        trusted-ca-file: /etc/etcd/tls/ca-cert.pem
-        cert-file: /etc/etcd/tls/cert.pem
-        key-file: /etc/etcd/tls/key
+        trusted-ca-file: /etc/etcd/tls/ca.crt
+        cert-file: /etc/etcd/tls/etcd.crt
+        key-file: /etc/etcd/tls/etcd.key
         client-cert-auth: true
       client-transport-security:
 %{ if etcd_cluster.client_cert_auth ~}
-        trusted-ca-file: /etc/etcd/tls/ca-cert.pem
+        trusted-ca-file: /etc/etcd/tls/ca.crt
 %{ endif ~}
-        cert-file: /etc/etcd/tls/cert.pem
-        key-file: /etc/etcd/tls/key
+        cert-file: /etc/etcd/tls/etcd.crt
+        key-file: /etc/etcd/tls/etcd.key
         client-cert-auth: ${etcd_cluster.client_cert_auth}
 %{ if etcd_cluster.grpc_gateway_enabled ~}
       enable-grpc-gateway: true
@@ -130,19 +130,17 @@ write_files:
       WantedBy=multi-user.target
 
 runcmd:
-  #Move etcd tls related files and configuration file in correct directory
-  - mkdir -p /etc/etcd/tls
-  - mv /opt/ca-cert.pem /opt/cert.pem /opt/key /etc/etcd/tls/
-  - mv /opt/conf.yml /etc/etcd/conf.yml
+  #Set etcd configs as owned by etcd
   - chown etcd:etcd -R /etc/etcd
 %{ if install_dependencies ~}
   #Install etcd service binaries
-  - wget -O /opt/etcd-v3.5.9-linux-amd64.tar.gz https://storage.googleapis.com/etcd/v3.5.9/etcd-v3.5.9-linux-amd64.tar.gz
+  - wget -O /opt/etcd-v3.5.17-linux-amd64.tar.gz https://storage.googleapis.com/etcd/v3.5.17/etcd-v3.5.17-linux-amd64.tar.gz
   - mkdir -p /opt/etcd
-  - tar xzvf /opt/etcd-v3.5.9-linux-amd64.tar.gz -C /opt/etcd
-  - cp /opt/etcd/etcd-v3.5.9-linux-amd64/etcd /usr/local/bin/etcd
-  - cp /opt/etcd/etcd-v3.5.9-linux-amd64/etcdctl /usr/local/bin/etcdctl
-  - rm -f /opt/etcd-v3.5.9-linux-amd64.tar.gz
+  - tar xzvf /opt/etcd-v3.5.17-linux-amd64.tar.gz -C /opt/etcd
+  - cp /opt/etcd/etcd-v3.5.17-linux-amd64/etcd /usr/local/bin/etcd
+  - cp /opt/etcd/etcd-v3.5.17-linux-amd64/etcdctl /usr/local/bin/etcdctl
+  - cp /opt/etcd/etcd-v3.5.17-linux-amd64/etcdutl /usr/local/bin/etcdutl
+  - rm -f /opt/etcd-v3.5.17-linux-amd64.tar.gz
   - rm -rf /opt/etcd
 %{ endif ~}
   #Create etcd service data directory
