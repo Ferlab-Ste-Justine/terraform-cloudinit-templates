@@ -107,9 +107,6 @@ runcmd:
 %{ if keycloak_user_passwords.pbicsuser != "" ~}
   - ./pacbio/smrtlink/admin/bin/set-keycloak-creds --user pbicsuser --password '${keycloak_user_passwords.pbicsuser}' --admin-password '${keycloak_user_passwords.admin}'
 %{ endif ~}
-%{ if keycloak_user_passwords.pbinstrument != "" ~}
-  - ./pacbio/smrtlink/admin/bin/set-keycloak-creds --user pbinstrument --password '${keycloak_user_passwords.pbinstrument}' --admin-password '${keycloak_user_passwords.admin}'
-%{ endif ~}
   - ./pacbio/smrtlink/admin/bin/accept-user-agreement --install-metrics false --job-metrics false
 %{ if sequencing_system == "revio" && revio.srs_transfer.name != "" ~}
   - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument create-transfer-location 'srs' --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' '${revio.srs_transfer.name}' --description '${revio.srs_transfer.description}' --transfer-host '${revio.srs_transfer.host}' --dest-path '${revio.srs_transfer.dest_path}' --transfer-user '${revio.srs_transfer.username}' --ssh-key '${revio.srs_transfer.ssh_key}'
