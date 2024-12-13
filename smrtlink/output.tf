@@ -5,6 +5,7 @@ output "configuration" {
     {
       install_dependencies    = var.install_dependencies
       domain_name             = var.domain_name
+      tls_custom              = var.tls_custom
       user                    = var.user
       sequencing_system       = var.sequencing_system
       revio                   = var.revio

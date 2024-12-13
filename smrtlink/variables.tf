@@ -8,6 +8,14 @@ variable "domain_name" {
   type        = string
 }
 
+variable "tls_custom" {
+  description = "Tls custom configuration to replace the default self-signed one"
+  type = object({
+    cert = string
+    key  = string
+  })
+}
+
 variable "user" {
   description = "Smrt-link install user"
   type = object({

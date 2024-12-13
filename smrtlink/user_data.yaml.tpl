@@ -25,6 +25,18 @@ write_files:
     content: |
       SMRT_USER=${user.name}
       SMRT_ROOT=/opt/pacbio/smrtlink
+%{ if tls_custom.cert != "" && tls_custom.key != "" ~}
+  - path: /opt/tls_custom/smrtlink-site.crt
+    owner: root:root
+    permissions: "0444"
+    content: |
+      ${indent(6, tls_custom.cert)}
+  - path: /opt/tls_custom/smrtlink-site.key
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, tls_custom.key)}
+%{ endif ~}
   - path: /etc/systemd/system/smrtlink.service
     owner: root:root
     permissions: "0444"
@@ -76,6 +88,12 @@ runcmd:
 %{ endif ~}
   - sudo -u ${user.name} ./$(ls *.run) --batch --lite ${install_lite} --jmstype NONE --rootdir /opt/pacbio/smrtlink --dbdatadir /var/lib/smrtlink/userdata/db_datadir --jobsroot /var/lib/smrtlink/userdata/jobs_root --nworkers ${workers_count} --enable-update false $DOMAIN_ARG $SMTP_ARGS
   - rm $(ls *.run)
+
+  #Preparation: TLS custom configuration
+%{ if tls_custom.cert != "" && tls_custom.key != "" ~}
+  - chown -R ${user.name}:${user.name} tls_custom
+  - ln -s /opt/tls_custom pacbio/smrtlink/userdata/config/security
+%{ endif ~}
 
   #Service
   - systemctl enable smrtlink
