@@ -79,6 +79,8 @@ write_files:
       }
       telemetry {
         prometheus_retention_time = "1h"
+        disable_hostname = true
+        forwarding_enabled = true
       }
   - path: /etc/systemd/system/vault.service
     owner: root:root
