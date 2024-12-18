@@ -107,6 +107,10 @@ runcmd:
 %{ if keycloak_user_passwords.pbicsuser != "" ~}
   - ./pacbio/smrtlink/admin/bin/set-keycloak-creds --user pbicsuser --password '${keycloak_user_passwords.pbicsuser}' --admin-password '${keycloak_user_passwords.admin}'
 %{ endif ~}
+%{ for user in keycloak_users ~}
+  - USER_CREATE_OUTPUT=$(./pacbio/smrtlink/smrtcmds/bin/python3 pacbio/smrtlink/current/bundles/smrtlink-analysisservices-gui/current/private/pacbio/smrtlink-analysisservices-gui/bin/create-local-user '${user.id}' --password '${user.password}' --role '${user.role}' --firstname '${user.first_name}' --lastname '${user.last_name}' --email '${user.email}' --keycloak-password '${keycloak_user_passwords.admin}' 2>&1)
+  - if echo "$USER_CREATE_OUTPUT" | grep -q "^409 Client Error"; then echo "User '${user.id}' has already been created."; else echo "$USER_CREATE_OUTPUT"; fi
+%{ endfor ~}
   - ./pacbio/smrtlink/admin/bin/accept-user-agreement --install-metrics false --job-metrics false
 %{ if sequencing_system == "revio" && revio.srs_transfer.name != "" ~}
   - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument create-transfer-location 'srs' --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' '${revio.srs_transfer.name}' --description '${revio.srs_transfer.description}' --transfer-host '${revio.srs_transfer.host}' --dest-path '${revio.srs_transfer.dest_path}' --transfer-user '${revio.srs_transfer.username}' --ssh-key '${revio.srs_transfer.ssh_key}'

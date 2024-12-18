@@ -65,11 +65,24 @@ variable "workers_count" {
 }
 
 variable "keycloak_user_passwords" {
-  description = "Keycloak user passwords to change from defaults"
+  description = "Keycloak user passwords of built-in users to change from defaults"
   type        = object({
     admin     = string
     pbicsuser = string
   })
+  sensitive = true
+}
+
+variable "keycloak_users" {
+  description = "Keycloak users to create"
+  type        = list(object({
+    id         = string
+    password   = string
+    role       = string
+    first_name = string
+    last_name  = string
+    email      = string
+  }))
   sensitive = true
 }
 

@@ -13,6 +13,7 @@ output "configuration" {
       install_lite            = var.install_lite
       workers_count           = var.workers_count
       keycloak_user_passwords = var.keycloak_user_passwords
+      keycloak_users          = var.keycloak_users
       smtp                    = var.smtp
     }
   )
