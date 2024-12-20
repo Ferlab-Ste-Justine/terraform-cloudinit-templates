@@ -77,6 +77,10 @@ write_files:
         password      = "${etcd_backend.client.password}"
 %{ endif ~}
       }
+      telemetry {
+        prometheus_retention_time = "1h"
+        disable_hostname = true
+      }
   - path: /etc/systemd/system/vault.service
     owner: root:root
     permissions: "0444"
