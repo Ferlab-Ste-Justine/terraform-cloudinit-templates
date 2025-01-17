@@ -90,6 +90,13 @@ runcmd:
   - sudo -u ${user.name} ./$(ls smrtlink-release/*.run) --batch --lite ${install_lite} --jmstype NONE --rootdir /opt/pacbio/smrtlink --dbdatadir /var/lib/smrtlink/userdata/db_datadir --jobsroot /var/lib/smrtlink/userdata/jobs_root --nworkers ${workers_count} --enable-update false $DOMAIN_ARG $SMTP_ARGS
   - rm -r smrtlink-release
 
+  #Preparation: Uploads folder symlink
+  - mkdir -p /var/lib/smrtlink/userdata/uploads
+  - chown ${user.name}:${user.name} /var/lib/smrtlink/userdata/uploads
+  - rmdir pacbio/smrtlink/userdata/uploads
+  - ln -s /var/lib/smrtlink/userdata/uploads pacbio/smrtlink/userdata/uploads
+  - chown -h ${user.name}:${user.name} pacbio/smrtlink/userdata/uploads
+
   #Preparation: TLS custom configuration
 %{ if tls_custom.cert != "" && tls_custom.key != "" ~}
   - chown -R ${user.name}:${user.name} tls_custom
