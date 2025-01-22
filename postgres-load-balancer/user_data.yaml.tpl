@@ -56,4 +56,4 @@ runcmd:
   - apt-get install -y docker-ce docker-ce-cli containerd.io
 %{ endif ~}
   - systemctl enable docker
-  - docker ${container_params.config} run -d --restart=always --name=postgres_load_balancer --network=host -v /opt/haproxy:/usr/local/etc/haproxy:ro -v /opt/patroni:/opt/patroni/:ro ${container_params.fluentd} haproxy:2.2.14
+  - docker ${container_params.config} run -d --restart=always --name=postgres_load_balancer --network=host -v /opt/haproxy:/usr/local/etc/haproxy:ro -v /opt/patroni:/opt/patroni/:ro %{ if container_params.fluentd != "" }${container_params.fluentd}%{ else }--log-driver=journald%{ endif } haproxy:2.2.14
