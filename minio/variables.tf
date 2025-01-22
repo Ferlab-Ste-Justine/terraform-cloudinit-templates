@@ -7,7 +7,7 @@ variable "minio_server" {
     tls          = object({
       server_cert = string
       server_key  = string
-      ca_cert     = string
+      ca_certs    = list(string)
     })
     auth         = object({
       root_username = string

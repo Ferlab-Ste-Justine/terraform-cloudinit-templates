@@ -15,11 +15,13 @@ users:
 
 write_files:
   #Minio tls Certificates
-  - path: /etc/minio/tls/CAs/ca.crt
+%{ for idx, cert in minio_server.tls.ca_certs ~}
+  - path: /etc/minio/tls/CAs/ca${idx}.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, minio_server.tls.ca_cert)}
+      ${indent(6, cert)}
+%{ endfor ~}
   - path: /etc/minio/tls/public.crt
     owner: root:root
     permissions: "0400"

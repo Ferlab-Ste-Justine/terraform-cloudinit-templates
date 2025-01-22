@@ -24,11 +24,6 @@ variable "user" {
   })
 }
 
-variable "sequencing_system" {
-  description = "Sequencing system to use for the smrt-link installation"
-  type        = string
-}
-
 variable "revio" {
   description = "Revio sequencing system settings"
   type        = object({

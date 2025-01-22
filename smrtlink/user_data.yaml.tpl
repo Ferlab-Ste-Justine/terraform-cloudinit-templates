@@ -70,9 +70,9 @@ runcmd:
 
   #Preparation: Deployment files
   - cd /opt
-  - wget https://downloads.pacbcloud.com/public/software/installers/smrtlink-${sequencing_system}_${release_version}.zip
-  - unzip smrtlink-${sequencing_system}_${release_version}.zip
-  - rm smrtlink-${sequencing_system}_${release_version}.zip
+  - wget https://downloads.pacbcloud.com/public/software/installers/smrtlink-release_${release_version}.zip
+  - unzip -j smrtlink-release_${release_version}.zip -d smrtlink-release
+  - rm smrtlink-release_${release_version}.zip
   - mkdir pacbio
   - chown ${user.name}:${user.name} pacbio
   - mkdir -p /var/lib/smrtlink
@@ -86,8 +86,8 @@ runcmd:
   - SMTP_ARGS="$SMTP_ARGS --mail-user ${smtp.user} --mail-password ${smtp.password}"
 %{ endif ~}
 %{ endif ~}
-  - sudo -u ${user.name} ./$(ls *.run) --batch --lite ${install_lite} --jmstype NONE --rootdir /opt/pacbio/smrtlink --dbdatadir /var/lib/smrtlink/userdata/db_datadir --jobsroot /var/lib/smrtlink/userdata/jobs_root --nworkers ${workers_count} --enable-update false $DOMAIN_ARG $SMTP_ARGS
-  - rm $(ls *.run)
+  - sudo -u ${user.name} ./$(ls smrtlink-release/*.run) --batch --lite ${install_lite} --jmstype NONE --rootdir /opt/pacbio/smrtlink --dbdatadir /var/lib/smrtlink/userdata/db_datadir --jobsroot /var/lib/smrtlink/userdata/jobs_root --nworkers ${workers_count} --enable-update false $DOMAIN_ARG $SMTP_ARGS
+  - rm -r smrtlink-release
 
   #Preparation: TLS custom configuration
 %{ if tls_custom.cert != "" && tls_custom.key != "" ~}
@@ -112,7 +112,7 @@ runcmd:
   - if echo "$USER_CREATE_OUTPUT" | grep -q "^409 Client Error"; then echo "User '${user.id}' has already been created."; else echo "$USER_CREATE_OUTPUT"; fi
 %{ endfor ~}
   - ./pacbio/smrtlink/admin/bin/accept-user-agreement --install-metrics false --job-metrics false
-%{ if sequencing_system == "revio" && revio.srs_transfer.name != "" ~}
+%{ if revio.srs_transfer.name != "" ~}
   - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument create-transfer-location 'srs' --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' '${revio.srs_transfer.name}' --description '${revio.srs_transfer.description}' --transfer-host '${revio.srs_transfer.host}' --dest-path '${revio.srs_transfer.dest_path}' --transfer-user '${revio.srs_transfer.username}' --ssh-key '${revio.srs_transfer.ssh_key}'
   - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument register --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' --transfer-location '${revio.srs_transfer.name}' --instrument-name '${revio.instrument.name}' '${revio.instrument.ip_address}' '${revio.instrument.secret_key}'
 %{ endif ~}
