@@ -59,6 +59,7 @@ write_files:
 %{ if install_dependencies ~}
 packages:
   - unzip
+  - python3-boto3
 %{ endif ~}
 
 runcmd:
