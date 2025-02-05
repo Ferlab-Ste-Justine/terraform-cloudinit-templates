@@ -33,9 +33,19 @@ bootstrap:
     retry_timeout: ${patroni.retry_timeout}
     master_start_timeout: ${patroni.master_start_timeout}
     master_stop_timeout: ${patroni.master_stop_timeout}
+%{ if patroni.is_synchronous ~}
     synchronous_mode: true
+%{ if patroni.synchronous_settings.strict ~}
     synchronous_mode_strict: true
-    synchronous_node_count: ${patroni.synchronous_node_count}
+%{ else ~}
+    synchronous_mode_strict: false
+%{ endif ~}
+    synchronous_node_count: ${patroni.synchronous_settings.synchronous_node_count}
+%{ else ~}
+    synchronous_mode: false
+    check_timeline: true
+    maximum_lag_on_failover: ${patroni.asynchronous_settings.maximum_lag_on_failover}
+%{ endif ~}
     postgresql:
       use_pg_rewind: false
       use_slots: true

@@ -45,7 +45,14 @@ variable "patroni" {
     master_start_timeout   = number
     master_stop_timeout    = number
     watchdog_safety_margin = number
-    synchronous_node_count = number
+    is_synchronous         = bool
+    synchronous_settings   = object({
+      strict = bool
+      synchronous_node_count = number
+    })
+    asynchronous_settings  = object({
+      maximum_lag_on_failover = number
+    })
     api                    = object({
       ca_cert       = string
       server_cert   = string
@@ -54,4 +61,10 @@ variable "patroni" {
       client_key    = string
     })
   })
+}
+
+variable "patroni_version" {
+  description = "Version of patroni to use install"
+  type        = string
+  default     = ""
 }

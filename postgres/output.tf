@@ -18,6 +18,7 @@ output "configuration" {
       install_dependencies = var.install_dependencies
       postgres             = var.postgres
       patroni              = var.patroni
+      patroni_version      = var.patroni_version
       etcd                 = var.etcd
       patroni_conf         = local.patroni_conf
     }

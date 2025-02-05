@@ -111,7 +111,11 @@ runcmd:
 %{ if install_dependencies ~}
   - pip3 install --upgrade pip
   - pip3 install psycopg2>=2.5.4
+%{ if patroni_version != "" ~}
+  - pip3 install patroni[etcd3]==${patroni_version}
+%{ else ~}
   - pip3 install patroni[etcd3]
+%{ endif ~}
 %{ endif ~}
   - systemctl enable patroni.service
   - systemctl start patroni.service
