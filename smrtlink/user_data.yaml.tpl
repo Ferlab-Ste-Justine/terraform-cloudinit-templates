@@ -37,6 +37,44 @@ write_files:
     content: |
       ${indent(6, tls_custom.key)}
 %{ endif ~}
+%{ if tls_custom.vault_agent_secret_path != "" ~}
+  - path: /opt/tls_custom/vault-agent/smrtlink-site.crt.ctmpl
+    owner: root:root
+    permissions: "0440"
+    content: |
+      {{ with secret "${tls_custom.vault_agent_secret_path}" }}
+      {{ .Data.data.cert }}
+      {{ end }}
+  - path: /opt/tls_custom/vault-agent/smrtlink-site.key.ctmpl
+    owner: root:root
+    permissions: "0440"
+    content: |
+      {{ with secret "${tls_custom.vault_agent_secret_path}" }}
+      {{ .Data.data.key }}
+      {{ end }}
+  - path: /etc/vault-agent.d/config/tls_custom.hcl
+    owner: root:root
+    permissions: "0440"
+    content: |
+      template {
+        source      = "/opt/tls_custom/vault-agent/smrtlink-site.crt.ctmpl"
+        destination = "/opt/tls_custom/smrtlink-site.crt"
+        exec {
+          command = ["systemctl", "restart", "smrtlink.service"]
+          timeout = "2m"
+        }
+        perms       = "0444"
+      }
+      template {
+        source      = "/opt/tls_custom/vault-agent/smrtlink-site.key.ctmpl"
+        destination = "/opt/tls_custom/smrtlink-site.key"
+        exec {
+          command = ["systemctl", "restart", "smrtlink.service"]
+          timeout = "2m"
+        }
+        perms       = "0400"
+      }
+%{ endif ~}
   - path: /etc/systemd/system/smrtlink.service
     owner: root:root
     permissions: "0444"
@@ -98,7 +136,7 @@ runcmd:
   - chown -h ${user.name}:${user.name} pacbio/smrtlink/userdata/uploads
 
   #Preparation: TLS custom configuration
-%{ if tls_custom.cert != "" && tls_custom.key != "" ~}
+%{ if (tls_custom.cert != "" && tls_custom.key != "") || tls_custom.vault_agent_secret_path != "" ~}
   - chown -R ${user.name}:${user.name} tls_custom
   - ln -s /opt/tls_custom pacbio/smrtlink/userdata/config/security
 %{ endif ~}

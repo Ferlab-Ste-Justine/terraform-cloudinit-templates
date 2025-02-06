@@ -11,8 +11,9 @@ variable "domain_name" {
 variable "tls_custom" {
   description = "Tls custom configuration to replace the default self-signed one"
   type = object({
-    cert = string
-    key  = string
+    cert                    = string
+    key                     = string
+    vault_agent_secret_path = string
   })
 }
 
