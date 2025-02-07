@@ -60,8 +60,7 @@ write_files:
         source      = "/opt/tls_custom/vault-agent/smrtlink-site.crt.ctmpl"
         destination = "/opt/tls_custom/smrtlink-site.crt"
         exec {
-          command = ["systemctl", "restart", "smrtlink.service"]
-          timeout = "2m"
+          command = ["sudo", "-u", "smrtanalysis", "/opt/pacbio/smrtlink/admin/bin/restart-gui"]
         }
         perms       = "0444"
       }
@@ -69,8 +68,7 @@ write_files:
         source      = "/opt/tls_custom/vault-agent/smrtlink-site.key.ctmpl"
         destination = "/opt/tls_custom/smrtlink-site.key"
         exec {
-          command = ["systemctl", "restart", "smrtlink.service"]
-          timeout = "2m"
+          command = ["sudo", "-u", "smrtanalysis", "/opt/pacbio/smrtlink/admin/bin/restart-gui"]
         }
         perms       = "0400"
       }
