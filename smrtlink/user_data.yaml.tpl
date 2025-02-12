@@ -73,6 +73,27 @@ write_files:
         perms       = "0400"
       }
 %{ endif ~}
+%{ if db_backups.enabled ~}
+  - path: /opt/smrtlink_cron.sh
+    owner: root:root
+    permissions: "0555"
+    content: |
+      #!/bin/bash
+      DEFAULT_BCK_DIR="/var/lib/smrtlink/userdata/db_datadir/backups/manual"
+      # Run backup
+      /opt/pacbio/smrtlink/install/smrtlink-release_${release_version}/admin/bin/dbhelper --backup
+      # Remove old backup symlinks + files without symlinks attached
+      echo "  Cleaning backups older than ${db_backups.retention_days} day(s)..."
+      find $DEFAULT_BCK_DIR -type l -mtime +${db_backups.retention_days} -exec rm {} \;
+      files="$(find $DEFAULT_BCK_DIR -type f -mtime +${db_backups.retention_days})"
+      for file in $files; do
+        symlinks_attached="$(find -L $DEFAULT_BCK_DIR -xtype l -samefile "$file")"
+        if [[ "$symlinks_attached" == "" ]]; then
+          rm "$file"
+        fi
+      done
+      echo "  Cleanup complete."
+%{ endif ~}
   - path: /etc/systemd/system/smrtlink.service
     owner: root:root
     permissions: "0444"
@@ -159,4 +180,9 @@ runcmd:
 %{ if revio.srs_transfer.name != "" ~}
   - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument create-transfer-location 'srs' --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' '${revio.srs_transfer.name}' --description '${revio.srs_transfer.description}' --transfer-host '${revio.srs_transfer.host}' --dest-path '${revio.srs_transfer.dest_path}' --transfer-user '${revio.srs_transfer.username}' --ssh-key '${revio.srs_transfer.ssh_key}'
   - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument register --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' --transfer-location '${revio.srs_transfer.name}' --instrument-name '${revio.instrument.name}' '${revio.instrument.ip_address}' '${revio.instrument.secret_key}'
+%{ endif ~}
+
+  #Preparation: Database backups cron job
+%{ if db_backups.enabled ~}
+  - echo "${db_backups.cron_expression} ${user.name} /opt/smrtlink_cron.sh" >> /etc/crontab
 %{ endif ~}

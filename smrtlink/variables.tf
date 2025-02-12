@@ -92,3 +92,12 @@ variable "smtp" {
   })
   sensitive = true
 }
+
+variable "db_backups" {
+  description = "Database backups configuration"
+  type        = object({
+    enabled         = bool
+    cron_expression = string
+    retention_days  = number
+  })
+}

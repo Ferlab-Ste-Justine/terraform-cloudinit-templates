@@ -14,6 +14,7 @@ output "configuration" {
       keycloak_user_passwords = var.keycloak_user_passwords
       keycloak_users          = var.keycloak_users
       smtp                    = var.smtp
+      db_backups              = var.db_backups
     }
   )
 }
