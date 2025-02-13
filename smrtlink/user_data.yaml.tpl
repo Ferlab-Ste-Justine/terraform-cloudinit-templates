@@ -182,7 +182,16 @@ runcmd:
   - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument register --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' --transfer-location '${revio.srs_transfer.name}' --instrument-name '${revio.instrument.name}' '${revio.instrument.ip_address}' '${revio.instrument.secret_key}'
 %{ endif ~}
 
-  #Preparation: Database backups cron job
+  #Finalization: Database backups cron job
 %{ if db_backups.enabled ~}
   - echo "${db_backups.cron_expression} ${user.name} /opt/smrtlink_cron.sh" >> /etc/crontab
+%{ endif ~}
+
+  #Finalization: Docker installation
+%{ if install_dependencies ~}
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+  - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - apt-get update
+  - apt-get install -y docker-ce docker-ce-cli containerd.io
+  - usermod -aG docker ${user.name}
 %{ endif ~}
