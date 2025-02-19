@@ -83,17 +83,11 @@ write_files:
 packages:
   - python3
   - python3-pip
-  - lsb-release
-  - wget
-  - gnupg-agent
   - libpq-dev
 %{ endif ~}
 runcmd:
   #Install postgres
 %{ if install_dependencies ~}
-  - echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
-  - wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-  - apt-get update
   - apt-get install -y postgresql-14 postgresql-contrib-14
   - systemctl stop postgresql
   - systemctl disable postgresql
