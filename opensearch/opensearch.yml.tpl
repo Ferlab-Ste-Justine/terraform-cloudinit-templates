@@ -43,7 +43,7 @@ plugins.security.nodes_dn:
 plugins.security.authcz.admin_dn:
   - "CN=${opensearch_cluster.auth_dn_fields.admin_common_name},O=${opensearch_cluster.auth_dn_fields.organization}"
 plugins.security.restapi.roles_enabled: ["all_access"]
-prometheus.metric_name.prefix: "opensearch_"
-prometheus.indices: true
-prometheus.cluster.settings: true
-prometheus.nodes.filter: "_all"
+#prometheus.metric_name.prefix: "opensearch_"
+#prometheus.indices: true
+#prometheus.cluster.settings: true
+#prometheus.nodes.filter: "_all"
