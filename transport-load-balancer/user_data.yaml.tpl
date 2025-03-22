@@ -93,7 +93,8 @@ write_files:
       # Ugly workaround for now: https://github.com/envoyproxy/envoy/issues/8297#issuecomment-620659781
       ExecStart=bash -c '/usr/local/bin/envoy --base-id 2 \
                                               --config-path "/etc/transport-load-balancer/config.yml" \
-                                              --concurrency 2 | tee'
+                                              --concurrency 2 \
+                                              --log-level ${load_balancer.log_level} | tee'
 
       [Install]
       WantedBy=multi-user.target
@@ -101,12 +102,12 @@ write_files:
 runcmd:
   #Setup control plane
 %{ if install_dependencies ~}
-  - wget -O /tmp/envoy-transport-control-plane_0.4.0_linux_amd64.tar.gz https://github.com/Ferlab-Ste-Justine/envoy-transport-control-plane/releases/download/v0.4.0/envoy-transport-control-plane_0.4.0_linux_amd64.tar.gz
+  - wget -O /tmp/envoy-transport-control-plane_0.5.0_linux_amd64.tar.gz https://github.com/Ferlab-Ste-Justine/envoy-transport-control-plane/releases/download/v0.5.0/envoy-transport-control-plane_0.5.0_linux_amd64.tar.gz
   - mkdir -p /tmp/envoy-transport-control-plane
-  - tar zxvf /tmp/envoy-transport-control-plane_0.4.0_linux_amd64.tar.gz -C /tmp/envoy-transport-control-plane
+  - tar zxvf /tmp/envoy-transport-control-plane_0.5.0_linux_amd64.tar.gz -C /tmp/envoy-transport-control-plane
   - cp /tmp/envoy-transport-control-plane/envoy-transport-control-plane /usr/local/bin/envoy-transport-control-plane
   - rm -rf /tmp/envoy-transport-control-plane
-  - rm -f /tmp/envoy-transport-control-plane_0.4.0_linux_amd64.tar.gz
+  - rm -f /tmp/envoy-transport-control-plane_0.5.0_linux_amd64.tar.gz
   - chmod +x /usr/local/bin/envoy-transport-control-plane
 %{ endif ~}
   - chown -R transport-control-plane:transport-control-plane /etc/transport-control-plane

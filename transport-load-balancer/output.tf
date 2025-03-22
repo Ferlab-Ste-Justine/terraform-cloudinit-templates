@@ -21,6 +21,7 @@ output "configuration" {
     {
       install_dependencies = var.install_dependencies
       control_plane        = var.control_plane
+      load_balancer        = var.load_balancer
       load_balancer_config = local.load_balancer_config
       control_plane_config = local.control_plane_config
     }

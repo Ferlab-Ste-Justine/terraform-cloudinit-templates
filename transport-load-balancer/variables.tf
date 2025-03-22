@@ -35,7 +35,8 @@ variable "control_plane" {
 variable "load_balancer" {
   description = "Properties of the load balancer"
   type = object({
-    cluster = string
-    node_id = string
+    cluster   = string
+    node_id   = string
+    log_level = string
   })
 }
