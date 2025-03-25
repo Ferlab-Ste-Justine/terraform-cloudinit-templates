@@ -119,11 +119,11 @@ packages:
 runcmd:
   #Setup alertmanager service
 %{ if install_dependencies ~}
-  - curl -L https://github.com/prometheus/alertmanager/releases/download/v0.25.0/alertmanager-0.25.0.linux-amd64.tar.gz --output alertmanager.tar.gz
+  - curl -L https://github.com/prometheus/alertmanager/releases/download/v0.28.1/alertmanager-0.28.1.linux-amd64.tar.gz --output alertmanager.tar.gz
   - mkdir -p /tmp/alertmanager
   - tar zxvf alertmanager.tar.gz -C /tmp/alertmanager
-  - cp /tmp/alertmanager/alertmanager-0.25.0.linux-amd64/alertmanager /usr/local/bin/alertmanager
-  - cp /tmp/alertmanager/alertmanager-0.25.0.linux-amd64/amtool /usr/local/bin/amtool
+  - cp /tmp/alertmanager/alertmanager-0.28.1.linux-amd64/alertmanager /usr/local/bin/alertmanager
+  - cp /tmp/alertmanager/alertmanager-0.28.1.linux-amd64/amtool /usr/local/bin/amtool
   - rm -r /tmp/alertmanager
   - rm alertmanager.tar.gz
 %{ endif ~}
