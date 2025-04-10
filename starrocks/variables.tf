@@ -18,37 +18,25 @@ variable "node_type" {
   type        = string
 }
 
-variable "is_fe_leader" {
-  description = "Whether Starrocks node is the fe leader"
-  type        = bool
-}
-
-variable "fe_leader_node" {
-  description = "Starrocks ip and fqdn of the fe leader node"
+variable "fe_config" {
+  description = "Starrocks fe configuration"
   type        = object({
-    ip   = string
-    fqdn = string
+    initial_leader = object({
+      enabled           = bool
+      root_password     = string
+      fe_follower_fqdns = list(string)
+      be_fqdns          = list(string)
+    })
+    initial_follower = object({
+      enabled        = bool
+      fe_leader_fqdn = string
+    })
+    ssl = object({
+      enabled           = bool
+      cert              = string
+      key               = string
+      keystore_password = string
+      key_password      = string
+    })
   })
-}
-
-variable "fe_follower_nodes" {
-  description = "Starrocks ip and fqdn of each follower node"
-  type        = list(object({
-    ip   = string
-    fqdn = string
-  }))
-}
-
-variable "be_nodes" {
-  description = "Starrocks ip and fqdn of each be node"
-  type        = list(object({
-    ip   = string
-    fqdn = string
-  }))
-}
-
-variable "root_password" {
-  description = "Starrocks root password"
-  type        = string
-  sensitive   = true
 }
