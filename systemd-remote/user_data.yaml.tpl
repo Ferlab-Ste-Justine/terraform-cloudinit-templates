@@ -64,12 +64,12 @@ packages:
 runcmd:
 %{ if install_dependencies ~}
   #Install systemd-remote
-  - curl -L https://github.com/Ferlab-Ste-Justine/systemd-remote/releases/download/v0.1.0/systemd-remote_0.1.0_linux_amd64.tar.gz -o /tmp/systemd-remote_0.1.0_linux_amd64.tar.gz
+  - curl -L https://github.com/Ferlab-Ste-Justine/systemd-remote/releases/download/v0.2.0/systemd-remote_0.2.0_linux_amd64.tar.gz -o /tmp/systemd-remote_0.2.0_linux_amd64.tar.gz
   - mkdir -p /tmp/systemd-remote
-  - tar zxvf /tmp/systemd-remote_0.1.0_linux_amd64.tar.gz -C /tmp/systemd-remote
+  - tar zxvf /tmp/systemd-remote_0.2.0_linux_amd64.tar.gz -C /tmp/systemd-remote
   - cp /tmp/systemd-remote/systemd-remote /usr/local/bin/systemd-remote
   - rm -rf /tmp/systemd-remote
-  - rm -f /tmp/systemd-remote_0.1.0_linux_amd64.tar.gz
+  - rm -f /tmp/systemd-remote_0.2.0_linux_amd64.tar.gz
 %{ endif ~}
   - systemctl enable systemd-remote
   - systemctl start systemd-remote
