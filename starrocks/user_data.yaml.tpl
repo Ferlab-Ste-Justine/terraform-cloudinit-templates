@@ -61,7 +61,7 @@ write_files:
 %{ if fe_config.initial_leader.enabled ~}
       ExecStart=/opt/starrocks/fe/bin/start_fe.sh --host_type FQDN
 %{ else ~}
-      ExecStart=/opt/starrocks/fe/bin/start_fe.sh --helper ${fe_config.initial_follower.fe_leader_node.fqdn}:9010 --host_type FQDN
+      ExecStart=/opt/starrocks/fe/bin/start_fe.sh --helper ${fe_config.initial_follower.fe_leader_fqdn}:9010 --host_type FQDN
 %{ endif ~}
 %{ endif ~}
 %{ if node_type == "be" ~}
@@ -166,10 +166,10 @@ runcmd:
 %{ if node_type == "fe" && fe_config.initial_leader.enabled ~}
   - while ! mysqladmin -s -h127.0.0.1 -P9030 -uroot ping; do echo "mysqld is not alive, retrying in 5 seconds..."; sleep 5; done;
   - mysql -h127.0.0.1 -P9030 -uroot -e "SET PASSWORD = PASSWORD('${fe_config.initial_leader.root_password}');"
-%{ for fe_follower_node in fe_config.initial_leader.fe_follower_nodes ~}
-  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"ALTER SYSTEM ADD FOLLOWER '${fe_follower_node.fqdn}:9010';"
+%{ for fe_follower_fqdn in fe_config.initial_leader.fe_follower_fqdns ~}
+  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"ALTER SYSTEM ADD FOLLOWER '${fe_follower_fqdn}:9010';"
 %{ endfor ~}
-%{ for be_node in fe_config.initial_leader.be_nodes ~}
-  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"ALTER SYSTEM ADD BACKEND '${be_node.fqdn}:9050';"
+%{ for be_fqdn in fe_config.initial_leader.be_fqdns ~}
+  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"ALTER SYSTEM ADD BACKEND '${be_fqdn}:9050';"
 %{ endfor ~}
 %{ endif ~}
