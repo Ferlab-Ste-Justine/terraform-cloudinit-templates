@@ -22,11 +22,16 @@ write_files:
       PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/usr/lib/jvm/java-11-openjdk-amd64/bin
       LANG=en_US.UTF8
 %{ if fe_config.ssl.enabled ~}
-  - path: /opt/ssl/starrocks.p12
+  - path: /opt/ssl/starrocks.crt
     owner: root:root
     permissions: "0444"
-    encoding: base64
-    content: ${fe_config.ssl.keystore_base64}
+    content: |
+      ${indent(6, fe_config.ssl.cert)}
+  - path: /opt/ssl/starrocks.key
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, fe_config.ssl.key)}
 %{ endif ~}
   - path: /etc/systemd/system/starrocks.service
     owner: root:root
@@ -53,10 +58,10 @@ write_files:
       CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
       NoNewPrivileges=yes
 %{ if node_type == "fe" ~}
-%{ if fe_config.is_leader_at_start ~}
+%{ if fe_config.initial_leader.enabled ~}
       ExecStart=/opt/starrocks/fe/bin/start_fe.sh --host_type FQDN
 %{ else ~}
-      ExecStart=/opt/starrocks/fe/bin/start_fe.sh --helper ${network_info.fe_leader_node.fqdn}:9010 --host_type FQDN
+      ExecStart=/opt/starrocks/fe/bin/start_fe.sh --helper ${fe_config.initial_follower.fe_leader_node.fqdn}:9010 --host_type FQDN
 %{ endif ~}
 %{ endif ~}
 %{ if node_type == "be" ~}
@@ -89,15 +94,6 @@ packages:
 %{ endif ~}
 
 runcmd:
-  #Preparation: Hostnames
-  - echo '${network_info.fe_leader_node.ip} ${network_info.fe_leader_node.fqdn}' >> /etc/hosts
-%{ for fe_follower_node in network_info.fe_follower_nodes ~}
-  - echo '${fe_follower_node.ip} ${fe_follower_node.fqdn}' >> /etc/hosts
-%{ endfor ~}
-%{ for be_node in network_info.be_nodes ~}
-  - echo '${be_node.ip} ${be_node.fqdn}' >> /etc/hosts
-%{ endfor ~}
-
   #Preparation: JDK configuration + LANG variable
   - echo '. /opt/starrocks.env' >> /etc/profile
 
@@ -123,7 +119,6 @@ runcmd:
 
   #Preparation: Time zone
   - cp -f /usr/share/zoneinfo/${timezone} /etc/localtime
-  - hwclock
 
   #Preparation: ulimit configurations
   - echo '* soft nproc 65535' >> /etc/security/limits.conf
@@ -149,6 +144,8 @@ runcmd:
   - mkdir starrocks/meta
   - echo 'meta_dir = /opt/starrocks/meta' >> starrocks/fe/conf/fe.conf
 %{ if fe_config.ssl.enabled ~}
+  - openssl pkcs12 -export -in ssl/starrocks.crt -inkey ssl/starrocks.key -out ssl/starrocks.p12 -passout pass:${fe_config.ssl.keystore_password} -passin pass:${fe_config.ssl.key_password}
+  - chown -R starrocks:starrocks ssl
   - echo 'ssl_keystore_location = /opt/ssl/starrocks.p12' >> starrocks/fe/conf/fe.conf
   - echo 'ssl_keystore_password = ${fe_config.ssl.keystore_password}' >> starrocks/fe/conf/fe.conf
   - echo 'ssl_key_password = ${fe_config.ssl.key_password}' >> starrocks/fe/conf/fe.conf
@@ -166,13 +163,13 @@ runcmd:
   - systemctl start starrocks
 
   #Setup
-%{ if node_type == "fe" && fe_config.is_leader_at_start ~}
+%{ if node_type == "fe" && fe_config.initial_leader.enabled ~}
   - while ! mysqladmin -s -h127.0.0.1 -P9030 -uroot ping; do echo "mysqld is not alive, retrying in 5 seconds..."; sleep 5; done;
-  - mysql -h127.0.0.1 -P9030 -uroot -e "SET PASSWORD = PASSWORD('${fe_config.root_password}');"
-%{ for fe_follower_node in network_info.fe_follower_nodes ~}
-  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.root_password} -e"ALTER SYSTEM ADD FOLLOWER '${fe_follower_node.fqdn}:9010';"
+  - mysql -h127.0.0.1 -P9030 -uroot -e "SET PASSWORD = PASSWORD('${fe_config.initial_leader.root_password}');"
+%{ for fe_follower_node in fe_config.initial_leader.fe_follower_nodes ~}
+  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"ALTER SYSTEM ADD FOLLOWER '${fe_follower_node.fqdn}:9010';"
 %{ endfor ~}
-%{ for be_node in network_info.be_nodes ~}
-  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.root_password} -e"ALTER SYSTEM ADD BACKEND '${be_node.fqdn}:9050';"
+%{ for be_node in fe_config.initial_leader.be_nodes ~}
+  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"ALTER SYSTEM ADD BACKEND '${be_node.fqdn}:9050';"
 %{ endfor ~}
 %{ endif ~}

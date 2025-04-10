@@ -21,31 +21,31 @@ variable "node_type" {
 variable "fe_config" {
   description = "Starrocks fe configuration"
   type        = object({
-    is_leader_at_start = bool
-    ssl                = object({
+    initial_leader = object({
+      enabled       = bool
+      root_password = string
+      fe_follower_nodes = list(object({
+        ip   = string
+        fqdn = string
+      }))
+      be_nodes = list(object({
+        ip   = string
+        fqdn = string
+      }))
+    })
+    initial_follower = object({
+      enabled       = bool
+      fe_leader_node = object({
+        ip   = string
+        fqdn = string
+      })
+    })
+    ssl = object({
       enabled           = bool
-      keystore_base64   = string
+      cert              = string
+      key               = string
       keystore_password = string
       key_password      = string
     })
-    root_password = string
-  })
-}
-
-variable "network_info" {
-  description = "Starrocks network information"
-  type        = object({
-    fe_leader_node = object({
-      ip   = string
-      fqdn = string
-    })
-    fe_follower_nodes = list(object({
-      ip   = string
-      fqdn = string
-    }))
-    be_nodes = list(object({
-      ip   = string
-      fqdn = string
-    }))
   })
 }
