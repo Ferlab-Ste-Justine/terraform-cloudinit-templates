@@ -23,9 +23,14 @@ variable "fe_config" {
   type        = object({
     initial_leader = object({
       enabled           = bool
-      root_password     = string
       fe_follower_fqdns = list(string)
       be_fqdns          = list(string)
+      root_password     = string
+      users             = list(object({
+        name         = string
+        password     = string
+        default_role = string
+      }))
     })
     initial_follower = object({
       enabled        = bool
@@ -39,4 +44,5 @@ variable "fe_config" {
       key_password      = string
     })
   })
+  sensitive = true
 }

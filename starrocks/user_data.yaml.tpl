@@ -172,4 +172,7 @@ runcmd:
 %{ for be_fqdn in fe_config.initial_leader.be_fqdns ~}
   - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"ALTER SYSTEM ADD BACKEND '${be_fqdn}:9050';"
 %{ endfor ~}
+%{ for user in fe_config.initial_leader.users ~}
+  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"CREATE USER '${user.name}' IDENTIFIED BY '${user.password}' DEFAULT ROLE '${user.default_role}';"
+%{ endfor ~}
 %{ endif ~}
