@@ -127,7 +127,7 @@ packages:
 runcmd:
 %{ if install_dependencies ~}
   #Install etcd terraform backend service
-  - curl -L https://github.com/Ferlab-Ste-Justine/terraform-backend-etcd/releases/download/v0.4.0/terraform-backend-etcd_0.4.0_linux_amd64.tar.gz -o /tmp/terraform-backend-etcd.tar.gz
+  - curl -L https://github.com/Ferlab-Ste-Justine/terraform-backend-etcd/releases/download/v0.5.0/terraform-backend-etcd_0.5.0_linux_amd64.tar.gz -o /tmp/terraform-backend-etcd.tar.gz
   - mkdir -p /tmp/terraform-backend-etcd
   - tar zxvf /tmp/terraform-backend-etcd.tar.gz -C /tmp/terraform-backend-etcd
   - cp /tmp/terraform-backend-etcd/terraform-backend-etcd /usr/local/bin/terraform-backend-etcd

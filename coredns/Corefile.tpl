@@ -11,10 +11,10 @@
     forward ${forward.domain_name} ${join(" ", forward.dns_servers)}
 %{ endfor ~}
 
-%{ if length(dns.cache_settings.domains) > 0 ~}
-    cache ${dns.cache_settings.max_ttl} ${join(" ", dns.cache_settings.domains)} {
-%{ if dns.cache_settings.prefetch.amount != "" ~}
-        prefetch ${dns.cache_settings.prefetch.amount} ${dns.cache_settings.prefetch.duration}
+%{ if length(dns.cache.domains) > 0 ~}
+    cache ${dns.cache.max_ttl} ${join(" ", dns.cache.domains)} {
+%{ if dns.cache.prefetch.amount != "" ~}
+        prefetch ${dns.cache.prefetch.amount} ${dns.cache.prefetch.duration}
 %{ endif ~}
     }
 %{ endif ~}

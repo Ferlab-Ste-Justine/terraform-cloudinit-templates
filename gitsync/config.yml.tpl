@@ -10,6 +10,9 @@ git:
   auth:
     ssh_key: "/etc/${naming.service}/git/auth/client_ssh_key"
     known_key: "/etc/${naming.service}/git/auth/server_ssh_fingerprint"
+%{ if git.auth.client_ssh_user != "" ~}
+    user: "${git.auth.client_ssh_user}"
+%{ endif ~}
 %{ if length(git.trusted_gpg_keys) > 0 ~}
   accepted_signatures: "/etc/${naming.service}/git/trusted_gpg_keys"
 %{ endif ~}

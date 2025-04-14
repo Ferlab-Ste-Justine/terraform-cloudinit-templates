@@ -51,7 +51,7 @@ runcmd:
   - cp /opt/etcd/etcd-v3.5.17-linux-amd64/etcdutl /usr/local/bin/etcdutl
   - rm -f /opt/etcd-v3.5.17-linux-amd64.tar.gz
   - rm -rf /opt/etcd
-  - wget -O /opt/etcd-backup.tar.gz https://github.com/Ferlab-Ste-Justine/etcd-backup/releases/download/v0.2.0/etcd-backup_0.2.0_linux_amd64.tar.gz
+  - wget -O /opt/etcd-backup.tar.gz https://github.com/Ferlab-Ste-Justine/etcd-backup/releases/download/v0.3.0/etcd-backup_0.3.0_linux_amd64.tar.gz
   - mkdir -p /opt/etcd-backup
   - tar xzvf /opt/etcd-backup.tar.gz -C /opt/etcd-backup
   - cp /opt/etcd-backup/etcd-backup /usr/local/bin/etcd-backup

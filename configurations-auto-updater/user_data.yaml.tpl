@@ -146,12 +146,12 @@ packages:
 runcmd:
 %{ if install_dependencies ~}
   #Install configurations-auto-updater
-  - curl -L https://github.com/Ferlab-Ste-Justine/configurations-auto-updater/releases/download/v0.5.0/configurations-auto-updater_0.5.0_linux_amd64.tar.gz -o /tmp/configurations-auto-updater_0.5.0_linux_amd64.tar.gz
+  - curl -L https://github.com/Ferlab-Ste-Justine/configurations-auto-updater/releases/download/v0.6.0/configurations-auto-updater_0.6.0_linux_amd64.tar.gz -o /tmp/configurations-auto-updater_0.6.0_linux_amd64.tar.gz
   - mkdir -p /tmp/configurations-auto-updater
-  - tar zxvf /tmp/configurations-auto-updater_0.5.0_linux_amd64.tar.gz -C /tmp/configurations-auto-updater
+  - tar zxvf /tmp/configurations-auto-updater_0.6.0_linux_amd64.tar.gz -C /tmp/configurations-auto-updater
   - cp /tmp/configurations-auto-updater/configurations-auto-updater /usr/local/bin/${naming.binary}
   - rm -rf /tmp/configurations-auto-updater
-  - rm -f /tmp/configurations-auto-updater_0.5.0_linux_amd64.tar.gz
+  - rm -f /tmp/configurations-auto-updater_0.6.0_linux_amd64.tar.gz
 %{ endif ~}
   - mkdir -p ${filesystem.path}
   - chown -R ${user}:${user} ${filesystem.path}

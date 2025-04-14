@@ -16,7 +16,7 @@ variable "dns" {
       domain_name = string,
       dns_servers = list(string)
     }))
-    cache_settings = object({
+    cache = object({
       domains  = list(string)
       max_ttl  = number  
       prefetch = object({ 
@@ -25,21 +25,4 @@ variable "dns" {
       })
     })
   })
-  default = {
-    dns_bind_addresses = ["0.0.0.0"]
-    observability_bind_address = "0.0.0.0"
-    nsid = "coredns"
-    zonefiles_reload_interval = "3s"
-    load_balance_records = true
-    alternate_dns_servers = []
-    forwards = []
-    cache_settings = {
-      domains  = []         
-      max_ttl  = 86400    
-      prefetch = {                    
-        amount   = 0                 
-        duration = ""    
-      }
-    }
-  }
 }

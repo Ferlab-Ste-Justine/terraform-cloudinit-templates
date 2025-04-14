@@ -15,6 +15,7 @@ variable "git" {
     path = string
     auth = object({
       client_ssh_key         = string
+      client_ssh_user        = string
       server_ssh_fingerprint = string
     })
     trusted_gpg_keys = list(string)
