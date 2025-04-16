@@ -144,11 +144,11 @@ runcmd:
   - mkdir starrocks/meta
   - echo 'meta_dir = /opt/starrocks/meta' >> starrocks/fe/conf/fe.conf
 %{ if fe_config.ssl.enabled ~}
-  - openssl pkcs12 -export -in ssl/starrocks.crt -inkey ssl/starrocks.key -out ssl/starrocks.p12 -passout pass:${fe_config.ssl.keystore_password} -passin pass:${fe_config.ssl.key_password}
+  - openssl pkcs12 -export -in ssl/starrocks.crt -inkey ssl/starrocks.key -out ssl/starrocks.p12 -passout pass:${fe_config.ssl.keystore_password}
   - chown -R starrocks:starrocks ssl
   - echo 'ssl_keystore_location = /opt/ssl/starrocks.p12' >> starrocks/fe/conf/fe.conf
   - echo 'ssl_keystore_password = ${fe_config.ssl.keystore_password}' >> starrocks/fe/conf/fe.conf
-  - echo 'ssl_key_password = ${fe_config.ssl.key_password}' >> starrocks/fe/conf/fe.conf
+  - echo 'ssl_key_password = ${fe_config.ssl.keystore_password}' >> starrocks/fe/conf/fe.conf
 %{ endif ~}
 %{ endif ~}
 %{ if node_type == "be" ~}

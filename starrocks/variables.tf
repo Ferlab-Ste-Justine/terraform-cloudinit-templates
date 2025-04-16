@@ -41,7 +41,6 @@ variable "fe_config" {
       cert              = string
       key               = string
       keystore_password = string
-      key_password      = string
     })
   })
   sensitive = true
