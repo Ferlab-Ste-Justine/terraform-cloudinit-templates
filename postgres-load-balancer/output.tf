@@ -6,7 +6,7 @@ locals {
     }
   )
   container_params = {
-    fluentd = var.fluentd.tag != "" ? "--log-driver=fluentd --log-opt fluentd-address=127.0.0.1:${var.fluentd.port} --log-opt fluentd-async-connect=true --log-opt fluentd-retry-wait=1s --log-opt fluentd-max-retries=3600 --log-opt fluentd-sub-second-precision=true --log-opt tag=${var.fluentd.tag}" : ""
+    fluentd = var.fluentd.tag != "" ? "--log-driver=fluentd --log-opt fluentd-address=127.0.0.1:${var.fluentd.port} --log-opt fluentd-async=true --log-opt fluentd-retry-wait=1s --log-opt fluentd-max-retries=3600 --log-opt fluentd-sub-second-precision=true --log-opt tag=${var.fluentd.tag}" : ""
     config = var.container_registry.url != "" ? "--config /opt/docker" : ""
   }
 }
