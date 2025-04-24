@@ -42,6 +42,10 @@ variable "fe_config" {
       key               = string
       keystore_password = string
     })
+    iceberg_rest = object({
+      ca_cert  = string
+      env_name = string
+    })
   })
   sensitive = true
 }

@@ -33,6 +33,13 @@ write_files:
     content: |
       ${indent(6, fe_config.ssl.key)}
 %{ endif ~}
+%{ if fe_config.iceberg_rest.ca_cert != "" ~}
+  - path: /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt
+    owner: root:root
+    permissions: "0444"
+    content: |
+      ${indent(6, fe_config.iceberg_rest.ca_cert)}
+%{ endif ~}
   - path: /etc/systemd/system/starrocks.service
     owner: root:root
     permissions: "0444"
@@ -149,6 +156,9 @@ runcmd:
   - echo 'ssl_keystore_location = /opt/ssl/starrocks.p12' >> starrocks/fe/conf/fe.conf
   - echo 'ssl_keystore_password = ${fe_config.ssl.keystore_password}' >> starrocks/fe/conf/fe.conf
   - echo 'ssl_key_password = ${fe_config.ssl.keystore_password}' >> starrocks/fe/conf/fe.conf
+%{ endif ~}
+%{ if fe_config.iceberg_rest.ca_cert != "" ~}
+  - keytool -import -noprompt -keystore /usr/lib/jvm/java-1.11.0-openjdk-amd64/lib/security/cacerts -file /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt -storepass changeit -alias ic-${fe_config.iceberg_rest.env_name}
 %{ endif ~}
 %{ endif ~}
 %{ if node_type == "be" ~}
