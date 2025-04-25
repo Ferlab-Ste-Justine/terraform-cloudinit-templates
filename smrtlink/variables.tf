@@ -29,17 +29,29 @@ variable "revio" {
   description = "Revio sequencing system settings"
   type        = object({
     srs_transfer = object({
-      name        = string
-      description = string
-      host        = string
-      dest_path   = string
-      username    = string
-      ssh_key     = string
+      name          = string
+      description   = string
+      host          = string
+      dest_path     = string
+      relative_path = string
+      username      = string
+      ssh_key       = string
+    })
+    s3compatible_transfer = object({
+        name        = string
+        description = string
+        endpoint    = string
+        bucket      = string
+        region      = string
+        path        = string
+        access_key  = string
+        secret_key  = string
     })
     instrument = object({
-      name       = string
-      ip_address = string
-      secret_key = string
+      name          = string
+      ip_address    = string
+      secret_key    = string
+      transfer_name = string
     })
   })
   sensitive = true

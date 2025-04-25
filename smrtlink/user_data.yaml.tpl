@@ -178,8 +178,13 @@ runcmd:
 %{ endfor ~}
   - ./pacbio/smrtlink/admin/bin/accept-user-agreement --install-metrics false --job-metrics false
 %{ if revio.srs_transfer.name != "" ~}
-  - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument create-transfer-location 'srs' --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' '${revio.srs_transfer.name}' --description '${revio.srs_transfer.description}' --transfer-host '${revio.srs_transfer.host}' --dest-path '${revio.srs_transfer.dest_path}' --transfer-user '${revio.srs_transfer.username}' --ssh-key '${revio.srs_transfer.ssh_key}'
-  - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument register --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' --transfer-location '${revio.srs_transfer.name}' --instrument-name '${revio.instrument.name}' '${revio.instrument.ip_address}' '${revio.instrument.secret_key}'
+  - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument create-transfer-location 'srs' --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' '${revio.srs_transfer.name}' --description '${revio.srs_transfer.description}' --transfer-host '${revio.srs_transfer.host}' --dest-path '${revio.srs_transfer.dest_path}' --relative-path '${revio.srs_transfer.relative_path}' --transfer-user '${revio.srs_transfer.username}' --ssh-key '${revio.srs_transfer.ssh_key}'
+%{ endif ~}
+%{ if revio.s3compatible_transfer.name != "" ~}
+  - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument create-transfer-location 's5cmd' --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' '${revio.s3compatible_transfer.name}' --description '${revio.s3compatible_transfer.description}' --transfer-host '${revio.s3compatible_transfer.endpoint}' --dest-path '${revio.s3compatible_transfer.bucket}' --aws-region '${revio.s3compatible_transfer.region}' --relative-path '${revio.s3compatible_transfer.path}' --access-key '${revio.s3compatible_transfer.access_key}' --secret-key '${revio.s3compatible_transfer.secret_key}'
+%{ endif ~}
+%{ if revio.instrument.name != "" ~}
+  - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument register --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' --transfer-location '${revio.instrument.transfer_name}' --instrument-name '${revio.instrument.name}' '${revio.instrument.ip_address}' '${revio.instrument.secret_key}'
 %{ endif ~}
 
   #Finalization: Database backups cron job
