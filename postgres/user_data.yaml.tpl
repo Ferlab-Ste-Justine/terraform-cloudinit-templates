@@ -65,7 +65,7 @@ write_files:
     content: |
       [Unit]
       Description="Postgres Patroni"
-      Wants=network-online.target
+      Wants=network-online.target ensure-softdog.service
       After=network-online.target
       StartLimitIntervalSec=0
 
@@ -79,6 +79,30 @@ write_files:
 
       [Install]
       WantedBy=multi-user.target
+  - path: /usr/local/bin/ensure-softdog
+    owner: root:root
+    permissions: "0555"
+    content: |
+      #!/bin/sh
+
+      SOFTDOG_LOADED=$(lsmod | grep softdog)
+      if [ -z "$SOFTDOG_LOADED" ]; then
+        modprobe softdog
+      fi
+  - path: /etc/systemd/system/ensure-softdog.service
+    owner: root:root
+    permissions: "0444"
+    content: |
+      [Unit]
+      Description="Ensure the softdog module is loaded"
+      StartLimitIntervalSec=0
+
+      [Service]
+      User=root
+      Group=root
+      Type=simple
+      ExecStart=/usr/local/bin/ensure-softdog
+
 %{ if install_dependencies ~}
 packages:
   - python3
@@ -104,8 +128,8 @@ runcmd:
   - chmod 0700 /var/lib/postgresql/14/data
   - chown postgres:postgres /var/lib/postgresql/14/data
   #Install patroni
+  - echo 'KERNEL=="watchdog", OWNER="postgres", GROUP="postgres"' > /etc/udev/rules.d/watchdog.rules
   - modprobe softdog
-  - chown postgres:postgres /dev/watchdog
   - chown -R postgres:postgres /etc/patroni
   - chown -R postgres:postgres /etc/postgres
 %{ if install_dependencies ~}
