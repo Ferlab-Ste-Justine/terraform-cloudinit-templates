@@ -117,10 +117,10 @@ runcmd:
   - apt-get update
   - apt-get install -y fluent-bit
 %{ endif ~}
-  - mkdir -p /var/lib/fluent-bit/systemd-db
-  - chmod 700 /var/lib/fluent-bit/systemd-db
-  - mkdir -p /var/lib/fluent-bit/log-db
-  - chmod 700 /var/lib/fluent-bit/log-db
+  - mkdir -p /var/lib/fluent-bit/systemd-services-db
+  - chmod 700 /var/lib/fluent-bit/systemd-services-db
+  - mkdir -p /var/lib/fluent-bit/log-files-db
+  - chmod 700 /var/lib/fluent-bit/log-files-db
 %{ if dynamic_config.enabled ~}
   - cp /etc/fluent-bit-customization/default-config/dynamic.conf /etc/fluent-bit/fluent-bit.conf
 %{ else ~}
