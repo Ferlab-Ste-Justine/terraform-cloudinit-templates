@@ -14,7 +14,7 @@
     Path             ${file.path}
     Path_Key         path
     DB               /var/lib/fluent-bit/log-files-db/${file.tag}
-    Read_from_Head   True
+    Read_from_Head   ${fluentbit.log_files_read_from_head}
     Skip_Empty_Lines On
     Mem_Buf_Limit    10MB
 
