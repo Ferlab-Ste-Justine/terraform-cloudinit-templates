@@ -17,10 +17,11 @@ variable "opensearch_cluster" {
       node_common_name  = string
       organization      = string
     })
-    basic_auth_enabled  = bool
-    cluster_name        = string
-    seed_hosts          = list(string)
-    verify_domains      = bool
+    basic_auth_enabled         = bool
+    cluster_name               = string
+    seed_hosts                 = list(string)
+    verify_domains             = bool
+    max_buckets_search_setting = string
   })
 }
 

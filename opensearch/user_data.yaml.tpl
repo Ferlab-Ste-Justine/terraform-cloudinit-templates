@@ -51,6 +51,15 @@ write_files:
           sleep 1
           STATUS=$(curl --silent --cert /etc/opensearch/client-certs/admin.crt --key /etc/opensearch/client-certs/admin.key --cacert /etc/opensearch/ca-certs/ca.crt https://${opensearch_host.bind_ip}:9200/_cluster/health | jq ".status")
       done
+      curl --silent --cert /etc/opensearch/client-certs/admin.crt --key /etc/opensearch/client-certs/admin.key --cacert /etc/opensearch/ca-certs/ca.crt https://${opensearch_host.bind_ip}:9200/_cluster/settings \
+        -X PUT \
+        -H "Content-Type: application/json" \
+        -d '{
+              "persistent": {
+                "search.max_buckets": ${opensearch_cluster.max_buckets_search_setting}
+              }
+            }'
+      echo
 
 %{ if opensearch_host.bootstrap_security ~}
       echo "Bootstraping opensearch security"
