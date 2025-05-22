@@ -157,11 +157,11 @@ packages:
 runcmd:
 %{ if install_dependencies ~}
   #Install rclone
-  - curl -L https://github.com/rclone/rclone/releases/download/v1.62.2/rclone-v1.62.2-linux-amd64.zip -o /tmp/rclone-v1.62.2-linux-amd64.zip
+  - curl -L https://github.com/rclone/rclone/releases/download/v1.69.2/rclone-v1.69.2-linux-amd64.zip -o /tmp/rclone-v1.69.2-linux-amd64.zip
   - mkdir -p /tmp/rclone
-  - unzip /tmp/rclone-v1.62.2-linux-amd64.zip -d /tmp/rclone
-  - cp /tmp/rclone/rclone-v1.62.2-linux-amd64/rclone /usr/local/bin/rclone
+  - unzip /tmp/rclone-v1.69.2-linux-amd64.zip -d /tmp/rclone
+  - cp /tmp/rclone/rclone-v1.69.2-linux-amd64/rclone /usr/local/bin/rclone
   - rm -rf /tmp/rclone
-  - rm -f /tmp/rclone-v1.62.2-linux-amd64.zip
+  - rm -f /tmp/rclone-v1.69.2-linux-amd64.zip
 %{ endif ~}
   - /opt/s3_start_sync_services.sh
