@@ -16,10 +16,10 @@ variable "fluentbit" {
       service = string
     }))
     log_files = list(object({
-      tag  = string
-      path = string
+      tag            = string
+      path           = string
+      read_from_head = bool
     }))
-    log_files_read_from_head = bool
     forward = object({
       domain = string
       port = number
