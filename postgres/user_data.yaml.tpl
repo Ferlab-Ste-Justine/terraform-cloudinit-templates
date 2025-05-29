@@ -6,6 +6,17 @@ merge_how:
    settings: [no_replace, recurse_list]
 
 write_files:
+  #Temporary Patch
+  - path: /opt/postgres/pg.key
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, postgres.server_key)}
+  - path: /opt/postgres/pg.pem
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, postgres.server_cert)}
   #Postgres Certs
   - path: /etc/postgres/tls/server.key
     owner: root:root
@@ -127,6 +138,8 @@ runcmd:
   - mkdir -p /var/lib/postgresql/14/data
   - chmod 0700 /var/lib/postgresql/14/data
   - chown postgres:postgres /var/lib/postgresql/14/data
+  #Temporary Patch
+  - chown -R postgres:postgres /opt/postgres
   #Install patroni
   - echo 'KERNEL=="watchdog", OWNER="postgres", GROUP="postgres"' > /etc/udev/rules.d/watchdog.rules
   - modprobe softdog
