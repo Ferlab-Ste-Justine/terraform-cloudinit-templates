@@ -9,6 +9,9 @@ node.roles:
   - ingest
 %{ endif ~}
 network.host: ["${opensearch_host.bind_ip}", _local_]
+%{ if length(opensearch_host.extra_http_bind_ips) > 0 ~}
+http.bind_host: ["${opensearch_host.bind_ip}", ${join(", ", [for ip in opensearch_host.extra_http_bind_ips: "\"${ip}\""])}, _local_]
+%{ endif ~}
 %{ if opensearch_host.initial_cluster ~}
 cluster.initial_master_nodes:
 %{ for seed_host in opensearch_cluster.seed_hosts ~}

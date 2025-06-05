@@ -11,11 +11,12 @@ locals {
     {
       opensearch_cluster = var.opensearch_cluster
       opensearch_host    = {
-        bind_ip            = var.opensearch_host.bind_ip
-        bootstrap_security = var.opensearch_host.bootstrap_security
-        host_name          = var.opensearch_host.host_name
-        initial_cluster    = false
-        manager            = var.opensearch_host.manager
+        bind_ip             = var.opensearch_host.bind_ip
+        extra_http_bind_ips = var.opensearch_host.extra_http_bind_ips
+        bootstrap_security  = var.opensearch_host.bootstrap_security
+        host_name           = var.opensearch_host.host_name
+        initial_cluster     = false
+        manager             = var.opensearch_host.manager
       }
     }
   )

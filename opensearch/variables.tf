@@ -1,11 +1,12 @@
 variable "opensearch_host" {
   description = "Opensearch host configurations"
   type = object({
-    bind_ip            = string
-    bootstrap_security = bool
-    host_name          = string
-    initial_cluster    = bool
-    manager            = bool
+    bind_ip             = string
+    extra_http_bind_ips = list(string)
+    bootstrap_security  = bool
+    host_name           = string
+    initial_cluster     = bool
+    manager             = bool
   })
 }
 
