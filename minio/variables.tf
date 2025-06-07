@@ -1,9 +1,9 @@
-variable "minio_server" {
-  description = "Minio parameters"
-  type = object({
+variable "minio_servers" {
+  description = "Minio server(s) parameters"
+  type = list(object({
+    tenant_name  = optional(string, "")
     api_port     = number
     console_port = number
-    volumes_roots = list(string)
     tls          = object({
       server_cert = string
       server_key  = string
@@ -15,28 +15,31 @@ variable "minio_server" {
     })
     api_url      = string
     console_url  = string
-  })
+  }))
+}
+
+variable "volume_roots" {
+  description = "List of mount paths of all the minio volumes"
+  type = list(string)
 }
 
 variable "kes" {
-  description = "Optional parameters for minio to use kes"
+  description = "Optional parameters for minio to use kes. If defined, the number of clients should match the number of minio servers"
   type = object({
     endpoint = string
-    tls = object({
-      client_cert = string
-      client_key = string
-      ca_cert = string
-    })
-    key = string
+    ca_cert = string
+    clients = list(object({
+      tls = object({
+        client_cert = string
+        client_key = string
+      })
+      key = string
+    }))
   })
   default = {
     endpoint = ""
-    tls = {
-      client_cert = ""
-      client_key = ""
-      ca_cert = ""
-    }
-    key = ""
+    ca_cert = ""
+    clients = []
   }
 }
 
