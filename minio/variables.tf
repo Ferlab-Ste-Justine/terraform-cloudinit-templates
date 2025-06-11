@@ -1,7 +1,8 @@
 variable "minio_servers" {
   description = "Minio server(s) parameters"
   type = list(object({
-    tenant_name  = optional(string, "")
+    tenant_name  = string
+    migrate_to   = bool
     api_port     = number
     console_port = number
     tls          = object({

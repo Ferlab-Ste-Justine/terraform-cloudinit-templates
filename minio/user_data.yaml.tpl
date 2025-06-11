@@ -15,6 +15,31 @@ users:
 
 write_files:
 %{ for srv_idx, minio_server in minio_servers ~}
+%{ if minio_server.migrate_to  ~}
+  - path: /opt/minio_migrate_to_tenant.sh
+    owner: root:root
+    permissions: "0500"
+    content: |
+      #!/usr/bin/env bash
+      IGNORE=("${minio_server.tenant_name}" "." "..")
+
+%{ for vol_root in volume_roots ~}
+      cd ${vol_root}
+
+      if [ ! -d "${minio_server.tenant_name}" ]; then
+        mkdir ${minio_server.tenant_name}
+
+        for FILE in $(ls -a); do
+          if ! echo "$${IGNORE[@]}" | grep -q "$FILE"; then
+            mv $FILE ${minio_server.tenant_name}/
+          fi
+        done
+      else
+        echo "Tenant ${minio_server.tenant_name} already exists. Aborting migration."
+        exit
+      fi
+%{ endfor ~}
+%{ endif ~}
   #Minio tls Certificates
 %{ for idx, cert in minio_server.tls.ca_certs ~}
   - path: ${minio_server.config_path}/tls/CAs/ca${idx}.crt
@@ -39,12 +64,12 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, index(kes.clients, srv_idx).tls.client_key)}
+      ${indent(6, element(kes.clients, srv_idx).tls.client_key)}
   - path: ${minio_server.config_path}/kes/tls/client.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, index(kes.clients, srv_idx).tls.client_cert)}
+      ${indent(6, element(kes.clients, srv_idx).tls.client_cert)}
   - path: ${minio_server.config_path}/kes/tls/ca.crt
     owner: root:root
     permissions: "0400"
@@ -110,7 +135,11 @@ write_files:
 runcmd:
 %{ for srv_idx, minio_server in minio_servers ~}
   - chown -R minio:minio ${minio_server.config_path}
+%{ if minio_server.migrate_to  ~}
+  - /opt/minio_migrate_to_tenant.sh
+%{ endif ~}
 %{ endfor ~}
+
 %{ for vol_root in volume_roots ~}
   - chown minio:minio ${vol_root}
 %{ endfor ~}
