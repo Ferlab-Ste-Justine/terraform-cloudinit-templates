@@ -49,3 +49,8 @@ variable "fe_config" {
   })
   sensitive = true
 }
+
+variable "be_storage_root_path" {
+  description = "Starrocks be storage root path"
+  type        = string
+}

@@ -162,8 +162,8 @@ runcmd:
 %{ endif ~}
 %{ endif ~}
 %{ if node_type == "be" ~}
-  - mkdir starrocks/storage
-  - echo 'storage_root_path = /opt/starrocks/storage' >> starrocks/be/conf/be.conf
+  - mkdir ${be_storage_root_path}
+  - echo 'storage_root_path = ${be_storage_root_path}' >> starrocks/be/conf/be.conf
 %{ endif ~}
   - chmod 0400 starrocks/${node_type}/conf/${node_type}.conf
 
