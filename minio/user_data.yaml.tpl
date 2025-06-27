@@ -28,6 +28,7 @@ write_files:
 
       if [ ! -d "${minio_server.tenant_name}" ]; then
         mkdir ${minio_server.tenant_name}
+        chown minio:minio ${minio_server.tenant_name}
 
         for FILE in $(ls -a); do
           if ! echo "$${IGNORE[@]}" | grep -q "$FILE"; then

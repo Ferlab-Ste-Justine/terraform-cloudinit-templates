@@ -44,6 +44,14 @@ write_files:
     owner: root:root
     permissions: "0400"
     content: |
+%{ if length(minio_services) > 0 ~}
+      minio_services:
+%{ for idx, service in minio_services ~}
+        - name: ${service.name}
+          tenant_name: ${service.tenant_name}
+          env_path: ${service.env_path}
+%{ endfor ~}
+%{ endif ~}
       etcd:
         config_prefix: ${ferio.etcd.config_prefix}
         workspace_prefix: ${ferio.etcd.workspace_prefix}
@@ -92,12 +100,12 @@ write_files:
 
 runcmd:
 %{ if install_dependencies ~}
-  - wget https://github.com/Ferlab-Ste-Justine/ferio/releases/download/v0.3.0/ferio_0.3.0_linux_amd64.tar.gz -O /tmp/ferio_0.3.0_linux_amd64.tar.gz
+  - wget https://github.com/Ferlab-Ste-Justine/ferio/releases/download/v0.4.0/ferio_0.4.0_linux_amd64.tar.gz -O /tmp/ferio_0.4.0_linux_amd64.tar.gz
   - mkdir -p /tmp/ferio
-  - tar zxvf /tmp/ferio_0.3.0_linux_amd64.tar.gz -C /tmp/ferio
+  - tar zxvf /tmp/ferio_0.4.0_linux_amd64.tar.gz -C /tmp/ferio
   - cp /tmp/ferio/ferio /usr/local/bin/ferio
   - rm -rf /tmp/ferio
-  - rm -f /tmp/ferio_0.3.0_linux_amd64.tar.gz
+  - rm -f /tmp/ferio_0.4.0_linux_amd64.tar.gz
 %{ endif ~}
   - systemctl enable ferio
   - systemctl start ferio
