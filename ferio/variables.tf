@@ -43,6 +43,15 @@ variable "ferio" {
   }
 }
 
+variable "minio_services" {
+  description = "List of minio services that ferio will manage"
+  type = list(object({
+    name = string
+    tenant_name = string
+    env_path = string
+  }))
+}
+
 variable "minio_os_uid" {
   description = "Uid that the minio os user will run as. Minio user will not be created if negative"
   type        = number
