@@ -46,6 +46,7 @@ variable "fe_config" {
       ca_cert  = string
       env_name = string
     })
+    meta_dir = string
   })
   sensitive = true
 }

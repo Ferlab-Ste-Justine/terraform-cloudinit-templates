@@ -148,8 +148,8 @@ runcmd:
 
   #Configuration
 %{ if node_type == "fe" ~}
-  - mkdir starrocks/meta
-  - echo 'meta_dir = /opt/starrocks/meta' >> starrocks/fe/conf/fe.conf
+  - mkdir ${fe_config.meta_dir}
+  - echo 'meta_dir = ${fe_config.meta_dir}' >> starrocks/fe/conf/fe.conf
 %{ if fe_config.ssl.enabled ~}
   - openssl pkcs12 -export -in ssl/starrocks.crt -inkey ssl/starrocks.key -out ssl/starrocks.p12 -passout pass:${fe_config.ssl.keystore_password}
   - chown -R starrocks:starrocks ssl
