@@ -9,7 +9,7 @@ variable "kes_server" {
     })
     clients      = list(object({
       name = string
-      key_prefix = string
+      keys = list(string)
       permissions = object({
         list_all = bool
         create   = bool
