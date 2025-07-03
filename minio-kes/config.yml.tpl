@@ -30,24 +30,24 @@ policy:
     allow:
 %{ if client.permissions.list_all ~}
       - /v1/key/list/*
-%{ else ~}
-      - /v1/key/list/${client.key_prefix}*
 %{ endif ~}
+%{ for key in client.keys ~}
 %{ if client.permissions.create ~}
-      - /v1/key/create/${client.key_prefix}*
+      - /v1/key/create/${key}
 %{ endif ~}
 %{ if client.permissions.delete ~}
-      - /v1/key/delete/${client.key_prefix}*
+      - /v1/key/delete/${key}
 %{ endif ~}
 %{ if client.permissions.generate ~}
-      - /v1/key/generate/${client.key_prefix}*
+      - /v1/key/generate/${key}
 %{ endif ~}
 %{ if client.permissions.encrypt ~}
-      - /v1/key/encrypt/${client.key_prefix}*
+      - /v1/key/encrypt/${key}
 %{ endif ~}
 %{ if client.permissions.decrypt ~}
-      - /v1/key/decrypt/${client.key_prefix}*
+      - /v1/key/decrypt/${key}
 %{ endif ~}
+%{ endfor ~}
     identities:
       - {{client_${client.name}_identity}}
 %{ endfor ~}
