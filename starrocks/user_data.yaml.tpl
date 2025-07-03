@@ -149,6 +149,7 @@ runcmd:
   #Configuration
 %{ if node_type == "fe" ~}
   - mkdir -p ${fe_config.meta_dir}
+  - chown starrocks:starrocks ${fe_config.meta_dir}
   - echo 'meta_dir = ${fe_config.meta_dir}' >> starrocks/fe/conf/fe.conf
 %{ if fe_config.ssl.enabled ~}
   - openssl pkcs12 -export -in ssl/starrocks.crt -inkey ssl/starrocks.key -out ssl/starrocks.p12 -passout pass:${fe_config.ssl.keystore_password}
@@ -163,6 +164,7 @@ runcmd:
 %{ endif ~}
 %{ if node_type == "be" ~}
   - mkdir -p ${be_storage_root_path}
+  - chown starrocks:starrocks ${be_storage_root_path}
   - echo 'storage_root_path = ${be_storage_root_path}' >> starrocks/be/conf/be.conf
 %{ endif ~}
   - chmod 0400 starrocks/${node_type}/conf/${node_type}.conf
