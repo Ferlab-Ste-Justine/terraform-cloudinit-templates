@@ -8,8 +8,8 @@ variable "timezone" {
   type        = string
 }
 
-variable "fqdn_patch" {
-  description = "Patch to add FQDN for localhost in /etc/hosts"
+variable "hosts_file_patch" {
+  description = "Patch to add FQDN for the node IP in /etc/hosts"
   type        = object({
     enabled = bool
     fqdn    = string

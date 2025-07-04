@@ -102,8 +102,8 @@ packages:
 
 runcmd:
   #Preparation: Hostnames
-%{ if fqdn_patch.enabled ~}
-  - sed -i '1i 127.0.0.1 ${fqdn_patch.fqdn}' /etc/hosts
+%{ if hosts_file_patch.enabled ~}
+  - sed -i "1i $(hostname -I | awk '{print $1}') ${hosts_file_patch.fqdn}" /etc/hosts
 %{ endif ~}
 
   #Preparation: JDK configuration + LANG variable
