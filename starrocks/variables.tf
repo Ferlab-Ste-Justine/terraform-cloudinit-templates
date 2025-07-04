@@ -8,6 +8,14 @@ variable "timezone" {
   type        = string
 }
 
+variable "fqdn_patch" {
+  description = "Patch to add FQDN for localhost in /etc/hosts"
+  type        = object({
+    enabled = bool
+    fqdn    = string
+  })
+}
+
 variable "release_version" {
   description = "Starrocks release version to install"
   type        = string
