@@ -47,13 +47,20 @@ bootstrap:
     maximum_lag_on_failover: ${patroni.asynchronous_settings.maximum_lag_on_failover}
 %{ endif ~}
     postgresql:
+%{ if patroni.use_pg_rewind ~}
+      use_pg_rewind: true
+%{ else ~}
       use_pg_rewind: false
+%{ endif ~}
       use_slots: true
       parameters:
         ssl: on
         ssl_cert_file: /etc/postgres/tls/server.crt
         ssl_key_file: /etc/postgres/tls/server.key
         log_directory: /var/log/postgresql
+%{ if length([for param in postgres.params: param.key if param.key == "wal_log_hints"]) == 0 && patroni.use_pg_rewind ~}
+        wal_log_hints: on
+%{ endif ~}
 %{ for param in postgres.params ~}
         ${param.key}: "${param.value}"
 %{ endfor ~}

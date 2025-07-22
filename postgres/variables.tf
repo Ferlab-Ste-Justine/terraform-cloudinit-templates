@@ -45,6 +45,7 @@ variable "patroni" {
     master_start_timeout   = number
     master_stop_timeout    = number
     watchdog_safety_margin = number
+    use_pg_rewind          = bool
     is_synchronous         = bool
     synchronous_settings   = object({
       strict = bool
