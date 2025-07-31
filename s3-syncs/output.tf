@@ -25,6 +25,7 @@ output "configuration" {
       incoming_sync = var.incoming_sync
       incoming_sync_rclone_args = join(" ", local.incoming_sync_rclone_args)
       outgoing_sync_rclone_args = join(" ", local.outgoing_sync_rclone_args)
+      user = var.user
     }
   )
 }
