@@ -132,11 +132,8 @@ write_files:
 %{ if length(incoming_sync.paths) > 0 ~}
 %{ if incoming_sync.sync_once ~}
       echo "Synchronizing from S3 ..."
-      systemctl start --wait s3-incoming-sync.service || true
-      SUCCESS=$(journalctl -u s3-incoming-sync.service | grep "s3-incoming-sync.service: Deactivated successfully." || true)
-      if [ -z "$SUCCESS" ]
-      then
-        echo "Failed to synchronize from S3"
+      if ! systemctl start --wait s3-incoming-sync.service; then
+        echo "Failed to synchronize from S3" >&2
         exit 1
       fi
       echo "Synchronized from S3"
