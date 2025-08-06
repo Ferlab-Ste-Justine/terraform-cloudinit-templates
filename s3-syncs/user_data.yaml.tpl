@@ -14,7 +14,7 @@ write_files:
       ${indent(6, object_store.ca_cert)}
 %{ endif ~}
   #Rclone configs
-  - path: /root/.config/rclone/rclone.conf
+  - path: /etc/s3-sync/rclone.conf
     owner: root:root
     permissions: "0400"
     content: |
@@ -40,7 +40,7 @@ write_files:
       set -xe
 
 %{ for path in outgoing_sync.paths ~}
-      rclone ${outgoing_sync_rclone_args} sync ${path.fs} s3:${replace(replace(join("/", [outgoing_sync.bucket, path.s3]), "////", "/"), "////", "/")}
+      rclone --config /etc/s3-sync/rclone.conf ${outgoing_sync_rclone_args} sync ${path.fs} s3:${replace(replace(join("/", [outgoing_sync.bucket, path.s3]), "////", "/"), "////", "/")}
 %{ endfor ~}
   #Rclone Sync Systemd Configuration
   - path: /etc/systemd/system/s3-outgoing-sync.timer
@@ -67,8 +67,8 @@ write_files:
       After=network-online.target
 
       [Service]
-      User=root
-      Group=root
+      User=${user}
+      Group=${user}
       Type=simple
       ExecStart=/opt/s3_outgoing_sync.sh
 
@@ -84,7 +84,7 @@ write_files:
       set -xe
 
 %{ for path in incoming_sync.paths ~}
-      rclone sync ${incoming_sync_rclone_args} s3:${replace(replace(join("/", [incoming_sync.bucket, path.s3]), "////", "/"), "////", "/")} ${path.fs}
+      rclone --config /etc/s3-sync/rclone.conf sync ${incoming_sync_rclone_args} s3:${replace(replace(join("/", [incoming_sync.bucket, path.s3]), "////", "/"), "////", "/")} ${path.fs}
 %{ endfor ~}
   #Rclone Sync Systemd Configuration
   - path: /etc/systemd/system/s3-incoming-sync.timer
@@ -111,8 +111,8 @@ write_files:
       After=network-online.target
 
       [Service]
-      User=root
-      Group=root
+      User=${user}
+      Group=${user}
       Type=simple
       ExecStart=/opt/s3_incoming_sync.sh
 
@@ -126,13 +126,14 @@ write_files:
 
       set -e
 
+      chown -R ${user}:${user} /etc/s3-sync
+      chown ${user}:${user} /opt/s3_*_sync.sh
+
 %{ if length(incoming_sync.paths) > 0 ~}
 %{ if incoming_sync.sync_once ~}
-      systemctl start --wait s3-incoming-sync.service
-      SUCCESS=$(journalctl -u s3-incoming-sync.service | grep "s3-incoming-sync.service: Succeeded")
-      if [ -z "$SUCCESS" ]
-      then
-        echo "Failed to synchronize from S3"
+      echo "Synchronizing from S3 ..."
+      if ! systemctl start --wait s3-incoming-sync.service; then
+        echo "Failed to synchronize from S3" >&2
         exit 1
       fi
       echo "Synchronized from S3"

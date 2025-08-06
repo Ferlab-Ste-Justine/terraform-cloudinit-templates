@@ -19,10 +19,7 @@ variable "tls_custom" {
 
 variable "user" {
   description = "Smrt-link install user"
-  type = object({
-    name                = string
-    ssh_authorized_keys = list(string)
-  })
+  type        = string
 }
 
 variable "revio" {
@@ -112,4 +109,9 @@ variable "db_backups" {
     cron_expression = string
     retention_days  = number
   })
+}
+
+variable "restore_db" {
+  description = "Whether to restore the latest smrtlinkdb database backup when the vm is created"
+  type        = bool
 }

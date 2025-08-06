@@ -60,6 +60,12 @@ variable "incoming_sync" {
   }
 }
 
+variable "user" {
+  description = "User to run the services as"
+  type        = string
+  default     = "root"
+}
+
 variable "install_dependencies" {
   description = "Whether to install all dependencies in cloud-init"
   type = bool

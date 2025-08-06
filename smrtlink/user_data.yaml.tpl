@@ -5,25 +5,12 @@ merge_how:
  - name: dict
    settings: [no_replace, recurse_list]
 
-%{ if install_dependencies ~}
-users:
-  - name: ${user.name}
-    lock_passwd: true
-    shell: /bin/bash
-%{ if length(user.ssh_authorized_keys) > 0 ~}
-    ssh_authorized_keys:
-%{ for key in user.ssh_authorized_keys ~}
-      - "${key}"
-%{ endfor ~}
-%{ endif ~}
-%{ endif ~}
-
 write_files:
   - path: /opt/smrtlink.env
     owner: root:root
     permissions: "0555"
     content: |
-      SMRT_USER=${user.name}
+      SMRT_USER=${user}
       SMRT_ROOT=/opt/pacbio/smrtlink
 %{ if tls_custom.cert != "" && tls_custom.key != "" ~}
   - path: /opt/tls_custom/smrtlink-site.crt
@@ -60,7 +47,7 @@ write_files:
         source      = "/opt/tls_custom/vault-agent/smrtlink-site.crt.ctmpl"
         destination = "/opt/tls_custom/smrtlink-site.crt"
         exec {
-          command = ["sudo", "-u", "${user.name}", "/opt/pacbio/smrtlink/admin/bin/restart-gui"]
+          command = ["sudo", "-u", "${user}", "/opt/pacbio/smrtlink/admin/bin/restart-gui"]
         }
         perms       = "0444"
       }
@@ -68,7 +55,7 @@ write_files:
         source      = "/opt/tls_custom/vault-agent/smrtlink-site.key.ctmpl"
         destination = "/opt/tls_custom/smrtlink-site.key"
         exec {
-          command = ["sudo", "-u", "${user.name}", "/opt/pacbio/smrtlink/admin/bin/restart-gui"]
+          command = ["sudo", "-u", "${user}", "/opt/pacbio/smrtlink/admin/bin/restart-gui"]
         }
         perms       = "0400"
       }
@@ -103,7 +90,7 @@ write_files:
       After=nfs-client.target network.target autofs.service remote-fs.target multi-user.target
 
       [Service]
-      User=${user.name}
+      User=${user}
       Type=forking
       TimeoutSec=600
       LimitNOFILE=8192
@@ -124,7 +111,7 @@ runcmd:
   - echo '. /opt/smrtlink.env' >> /etc/profile
 
   #Preparation: ulimit configurations
-  - echo '${user.name} soft nofile 8192' >> /etc/security/limits.conf
+  - echo '${user} soft nofile 8192' >> /etc/security/limits.conf
 
   #Preparation: Deployment files
   - cd /opt
@@ -132,9 +119,7 @@ runcmd:
   - unzip -j smrtlink-release_${release_version}.zip -d smrtlink-release
   - rm smrtlink-release_${release_version}.zip
   - mkdir pacbio
-  - chown ${user.name}:${user.name} pacbio
-  - mkdir -p /var/lib/smrtlink
-  - chown ${user.name}:${user.name} /var/lib/smrtlink
+  - chown ${user}:${user} pacbio
 %{ if domain_name != "" ~}
   - DOMAIN_ARG="--dnsname ${domain_name}"
 %{ endif ~}
@@ -144,20 +129,27 @@ runcmd:
   - SMTP_ARGS="$SMTP_ARGS --mail-user ${smtp.user} --mail-password ${smtp.password}"
 %{ endif ~}
 %{ endif ~}
-  - sudo -u ${user.name} ./$(ls smrtlink-release/*.run) --batch --lite ${install_lite} --jmstype NONE --rootdir /opt/pacbio/smrtlink --dbdatadir /var/lib/smrtlink/userdata/db_datadir --jobsroot /var/lib/smrtlink/userdata/jobs_root --nworkers ${workers_count} --enable-update false $DOMAIN_ARG $SMTP_ARGS
+  - sudo -u ${user} ./$(ls smrtlink-release/*.run) --batch --lite ${install_lite} --jmstype NONE --rootdir /opt/pacbio/smrtlink --dbdatadir /var/lib/smrtlink/userdata/db_datadir --jobsroot /var/lib/smrtlink/userdata/jobs_root --nworkers ${workers_count} --enable-update false $DOMAIN_ARG $SMTP_ARGS
   - rm -r smrtlink-release
 
   #Preparation: Uploads folder symlink
   - mkdir -p /var/lib/smrtlink/userdata/uploads
-  - chown ${user.name}:${user.name} /var/lib/smrtlink/userdata/uploads
+  - chown ${user}:${user} /var/lib/smrtlink/userdata/uploads
   - rmdir pacbio/smrtlink/userdata/uploads
   - ln -s /var/lib/smrtlink/userdata/uploads pacbio/smrtlink/userdata/uploads
-  - chown -h ${user.name}:${user.name} pacbio/smrtlink/userdata/uploads
+  - chown -h ${user}:${user} pacbio/smrtlink/userdata/uploads
 
   #Preparation: TLS custom configuration
 %{ if (tls_custom.cert != "" && tls_custom.key != "") || tls_custom.vault_agent_secret_path != "" ~}
-  - chown -R ${user.name}:${user.name} tls_custom
+  - chown -R ${user}:${user} tls_custom
   - ln -s /opt/tls_custom pacbio/smrtlink/userdata/config/security
+%{ endif ~}
+
+  #Preparation: Database restore
+%{ if restore_db ~}
+  - LATEST_BCK_FILE=/var/lib/smrtlink/userdata/db_datadir/backups/manual/latest_smrtlinkdb.sql
+  - while [ ! -f $LATEST_BCK_FILE ]; do echo "Backup file for restore is missing, retrying in 5 seconds..."; sleep 5; done;
+  - sudo -u ${user} /opt/pacbio/smrtlink/install/smrtlink-release_${release_version}/admin/bin/dbhelper --restore smrtlinkdb --restore-file $LATEST_BCK_FILE
 %{ endif ~}
 
   #Service
@@ -189,7 +181,7 @@ runcmd:
 
   #Finalization: Database backups cron job
 %{ if db_backups.enabled ~}
-  - echo "${db_backups.cron_expression} ${user.name} /opt/smrtlink_cron.sh" >> /etc/crontab
+  - echo "${db_backups.cron_expression} ${user} /opt/smrtlink_cron.sh" >> /etc/crontab
 %{ endif ~}
 
   #Finalization: Docker installation
@@ -198,5 +190,5 @@ runcmd:
   - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - apt-get update
   - apt-get install -y docker-ce docker-ce-cli containerd.io
-  - usermod -aG docker ${user.name}
+  - usermod -aG docker ${user}
 %{ endif ~}
