@@ -58,9 +58,6 @@ bootstrap:
         ssl_cert_file: /etc/postgres/tls/server.crt
         ssl_key_file: /etc/postgres/tls/server.key
         log_directory: /var/log/postgresql
-%{ if length([for param in postgres.params: param.key if param.key == "wal_log_hints"]) == 0 && patroni.use_pg_rewind ~}
-        wal_log_hints: on
-%{ endif ~}
 %{ for param in postgres.params ~}
         ${param.key}: "${param.value}"
 %{ endfor ~}
