@@ -85,6 +85,7 @@ write_files:
       StartLimitIntervalSec=0
 
       [Service]
+      LimitNOFILE=65535
       User=transport-load-balancer
       Group=transport-load-balancer
       Type=simple
