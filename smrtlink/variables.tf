@@ -72,8 +72,8 @@ variable "workers_count" {
 variable "keycloak_user_passwords" {
   description = "Keycloak user passwords of built-in users to change from defaults"
   type        = object({
-    admin     = string
-    pbicsuser = string
+    admin        = string
+    pbinstrument = string
   })
   sensitive = true
 }

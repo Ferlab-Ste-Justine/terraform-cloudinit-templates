@@ -147,6 +147,7 @@ runcmd:
 
   #Preparation: Database restore
 %{ if restore_db ~}
+  - echo "Restoring latest 'smrtlinkdb' database backup..."
   - LATEST_BCK_FILE=/var/lib/smrtlink/userdata/db_datadir/backups/manual/latest_smrtlinkdb.sql
   - while [ ! -f $LATEST_BCK_FILE ]; do echo "Backup file for restore is missing, retrying in 5 seconds..."; sleep 5; done;
   - sudo -u ${user} /opt/pacbio/smrtlink/install/smrtlink-release_${release_version}/admin/bin/dbhelper --restore smrtlinkdb --restore-file $LATEST_BCK_FILE
@@ -156,36 +157,49 @@ runcmd:
   - systemctl enable smrtlink
   - systemctl start smrtlink
 
+  #Patch
+  - echo "Applying timezone patch in 'smrtlinkdb' database..."
+  - ./pacbio/smrtlink/admin/bin/psql -d smrtlinkdb -c "DELETE FROM system_config WHERE param_key = 'timeZone';"
+
   #Setup
 %{ if keycloak_user_passwords.admin != "" ~}
+  - echo "Changing password of user 'admin'..."
   - ADMIN_PASS_OUTPUT=$(./pacbio/smrtlink/admin/bin/set-keycloak-creds --user admin --password '${keycloak_user_passwords.admin}' --admin-password 'admin' 2>&1)
   - if echo "$ADMIN_PASS_OUTPUT" | grep -q "^401 Client Error"; then echo "Password for user 'admin' has already been changed."; fi
 %{ endif ~}
-%{ if keycloak_user_passwords.pbicsuser != "" ~}
-  - ./pacbio/smrtlink/admin/bin/set-keycloak-creds --user pbicsuser --password '${keycloak_user_passwords.pbicsuser}' --admin-password '${keycloak_user_passwords.admin}'
+%{ if keycloak_user_passwords.pbinstrument != "" ~}
+  - echo "Changing password of user 'pbinstrument'..."
+  - ./pacbio/smrtlink/admin/bin/set-keycloak-creds --user pbinstrument --password '${keycloak_user_passwords.pbinstrument}' --admin-password '${keycloak_user_passwords.admin}'
 %{ endif ~}
 %{ for user in keycloak_users ~}
+  - echo "Creating user '${user.id}'..."
   - USER_CREATE_OUTPUT=$(./pacbio/smrtlink/smrtcmds/bin/python3 pacbio/smrtlink/current/bundles/smrtlink-analysisservices-gui/current/private/pacbio/smrtlink-analysisservices-gui/bin/create-local-user '${user.id}' --password '${user.password}' --role '${user.role}' --firstname '${user.first_name}' --lastname '${user.last_name}' --email '${user.email}' --keycloak-password '${keycloak_user_passwords.admin}' 2>&1)
   - if echo "$USER_CREATE_OUTPUT" | grep -q "^409 Client Error"; then echo "User '${user.id}' has already been created."; else echo "$USER_CREATE_OUTPUT"; fi
 %{ endfor ~}
+  - echo "Accepting user agreement..."
   - ./pacbio/smrtlink/admin/bin/accept-user-agreement --install-metrics false --job-metrics false
 %{ if revio.srs_transfer.name != "" ~}
+  - echo "Creating file transfer location '${revio.srs_transfer.name}' with the SSH (SRS) scheme..."
   - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument create-transfer-location 'srs' --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' '${revio.srs_transfer.name}' --description '${revio.srs_transfer.description}' --transfer-host '${revio.srs_transfer.host}' --dest-path '${revio.srs_transfer.dest_path}' --relative-path '${revio.srs_transfer.relative_path}' --transfer-user '${revio.srs_transfer.username}' --ssh-key '${revio.srs_transfer.ssh_key}'
 %{ endif ~}
 %{ if revio.s3compatible_transfer.name != "" ~}
+  - echo "Creating file transfer location '${revio.s3compatible_transfer.name}' with the S3-compatible Storage scheme..."
   - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument create-transfer-location 's5cmd' --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' '${revio.s3compatible_transfer.name}' --description '${revio.s3compatible_transfer.description}' --transfer-host '${revio.s3compatible_transfer.endpoint}' --dest-path '${revio.s3compatible_transfer.bucket}' --aws-region '${revio.s3compatible_transfer.region}' --relative-path '${revio.s3compatible_transfer.path}' --access-key '${revio.s3compatible_transfer.access_key}' --secret-key '${revio.s3compatible_transfer.secret_key}'
 %{ endif ~}
 %{ if revio.instrument.name != "" ~}
+  - echo "Creating instrument '${revio.instrument.name}' connected to file transfer location '${revio.instrument.transfer_name}'..."
   - ./pacbio/smrtlink/smrtcmds/developer/bin/pbservice-instrument register --user 'admin' --password '${keycloak_user_passwords.admin}' --port '8243' --transfer-location '${revio.instrument.transfer_name}' --instrument-name '${revio.instrument.name}' '${revio.instrument.ip_address}' '${revio.instrument.secret_key}'
 %{ endif ~}
 
   #Finalization: Database backups cron job
 %{ if db_backups.enabled ~}
+  - echo "Configuring periodic database backups..."
   - echo "${db_backups.cron_expression} ${user} /opt/smrtlink_cron.sh" >> /etc/crontab
 %{ endif ~}
 
   #Finalization: Docker installation
 %{ if install_dependencies ~}
+  - echo "Installing Docker..."
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
   - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - apt-get update
