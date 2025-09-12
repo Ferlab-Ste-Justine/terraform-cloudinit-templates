@@ -154,6 +154,10 @@ runcmd:
 %{ endif ~}
 
   #Service
+  - echo "Disabling automatic cleanup of IPC objects to prevent SMRT Link login issues..."
+  - sed -i 's/^#RemoveIPC=yes$/RemoveIPC=no/' /etc/systemd/logind.conf
+  - systemctl restart systemd-logind.service
+  - echo "Starting SMRT Link..."
   - systemctl enable smrtlink
   - systemctl start smrtlink
 
