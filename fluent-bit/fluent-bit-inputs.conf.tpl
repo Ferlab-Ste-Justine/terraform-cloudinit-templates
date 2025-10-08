@@ -16,7 +16,9 @@
     DB               /var/lib/fluent-bit/log-files-db/${file.tag}
     Read_from_Head   ${file.read_from_head}
     Skip_Empty_Lines On
-    Mem_Buf_Limit    10MB
+    Buffer_Chunk_Size  512k
+    Buffer_Max_Size    20M
+    Mem_Buf_Limit    64MB
 
 [FILTER]
     Name   record_modifier
