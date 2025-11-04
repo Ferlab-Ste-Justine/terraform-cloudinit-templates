@@ -25,14 +25,3 @@
     Match  ${file.tag}
     Record hostname $${HOSTNAME}
 %{ endfor ~}
-
-%{ if try(fluentbit.http_input.enabled, false) ~}
-[INPUT]
-    Name                      http
-    Listen                    ${fluentbit.http_input.listen}
-    Port                      ${fluentbit.http_input.port}
-    Tag                       ${fluentbit.http_input.tag}
-    Successful_Response_Code  201
-    Buffer_Chunk_Size         1M
-    Buffer_Max_Size           10M
-%{ endif ~}

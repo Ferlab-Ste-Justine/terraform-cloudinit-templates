@@ -14,103 +14,103 @@ users:
 %{ endif ~}
 
 write_files:
-%{ for srv_idx, s in minio_servers ~}
-%{ if s.migrate_to ~}
+%{ for srv_idx, minio_server in minio_servers ~}
+%{ if minio_server.migrate_to ~}
   - path: /opt/minio_migrate_to_tenant.sh
     owner: root:root
     permissions: "0500"
     content: |
       #!/usr/bin/env bash
       set -euo pipefail
-      IGNORE=("${s.tenant_name}" "." "..")
+      IGNORE=("${minio_server.tenant_name}" "." "..")
 %{ for vol_root in volume_roots ~}
       cd ${vol_root}
-      if [ ! -d "${s.tenant_name}" ]; then
-        mkdir "${s.tenant_name}"
-        chown minio:minio "${s.tenant_name}"
+      if [ ! -d "${minio_server.tenant_name}" ]; then
+        mkdir "${minio_server.tenant_name}"
+        chown minio:minio "${minio_server.tenant_name}"
         for FILE in $(ls -A); do
           if ! echo "$${IGNORE[@]}" | grep -q "$FILE"; then
-            mv "$FILE" "${s.tenant_name}/"
+            mv "$FILE" "${minio_server.tenant_name}/"
           fi
         done
       else
-        echo "Tenant ${s.tenant_name} already exists. Aborting migration."
+        echo "Tenant ${minio_server.tenant_name} already exists. Aborting migration."
         exit 0
       fi
 %{ endfor ~}
 %{ endif ~}
 
-%{ for idx, cert in s.tls.ca_certs ~}
-  - path: ${s.config_path}/tls/CAs/ca${idx}.crt
+%{ for idx, cert in minio_server.tls.ca_certs ~}
+  - path: ${minio_server.config_path}/tls/CAs/ca${idx}.crt
     owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, cert)}
 %{ endfor ~}
 
-  - path: ${s.config_path}/tls/public.crt
+  - path: ${minio_server.config_path}/tls/public.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, s.tls.server_cert)}
-  - path: ${s.config_path}/tls/private.key
+      ${indent(6, minio_server.tls.server_cert)}
+  - path: ${minio_server.config_path}/tls/private.key
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, s.tls.server_key)}
+      ${indent(6, minio_server.tls.server_key)}
 
 %{ if kes.endpoint != "" ~}
-  - path: ${s.config_path}/kes/tls/client.key
+  - path: ${minio_server.config_path}/kes/tls/client.key
     owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, element(kes.clients, srv_idx).tls.client_key)}
-  - path: ${s.config_path}/kes/tls/client.crt
+  - path: ${minio_server.config_path}/kes/tls/client.crt
     owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, element(kes.clients, srv_idx).tls.client_cert)}
-  - path: ${s.config_path}/kes/tls/ca.crt
+  - path: ${minio_server.config_path}/kes/tls/ca.crt
     owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, kes.ca_cert)}
 %{ endif ~}
 
-%{ if try(s.audit.client_cert, "") != "" && try(s.audit.client_key, "") != "" ~}
-  - path: ${s.config_path}/audit/tls/client.crt
+%{ if try(minio_server.audit.client_cert, "") != "" && try(minio_server.audit.client_key, "") != "" ~}
+  - path: ${minio_server.config_path}/audit/tls/client.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, s.audit.client_cert)}
-  - path: ${s.config_path}/audit/tls/client.key
+      ${indent(6, minio_server.audit.client_cert)}
+  - path: ${minio_server.config_path}/audit/tls/client.key
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, s.audit.client_key)}
+      ${indent(6, minio_server.audit.client_key)}
 %{ endif ~}
 
-  - path: ${s.config_path}/env
+  - path: ${minio_server.config_path}/env
     owner: root:root
     permissions: "0444"
     content: |
 %{ if length(volume_pools) > 0 ~}
       MINIO_VOLUMES=${element(volume_pools, srv_idx)}
 %{ endif ~}
-      MINIO_OPTS="--address \":${s.api_port}\" --console-address \":${s.console_port}\" --certs-dir ${s.config_path}/tls"
-      MINIO_ROOT_USER="${s.auth.root_username}"
-      MINIO_ROOT_PASSWORD="${s.auth.root_password}"
-%{ if s.api_url != "" ~}
-      MINIO_SERVER_URL="${s.api_url}"
+      MINIO_OPTS="--address \":${minio_server.api_port}\" --console-address \":${minio_server.console_port}\" --certs-dir ${minio_server.config_path}/tls"
+      MINIO_ROOT_USER="${minio_server.auth.root_username}"
+      MINIO_ROOT_PASSWORD="${minio_server.auth.root_password}"
+%{ if minio_server.api_url != "" ~}
+      MINIO_SERVER_URL="${minio_server.api_url}"
 %{ endif ~}
-%{ if s.console_url != "" ~}
-      MINIO_BROWSER_REDIRECT_URL="${s.console_url}"
+%{ if minio_server.console_url != "" ~}
+      MINIO_BROWSER_REDIRECT_URL="${minio_server.console_url}"
 %{ endif ~}
 %{ if kes.endpoint != "" ~}
       MINIO_KMS_KES_ENDPOINT="https://${kes.endpoint}"
-      MINIO_KMS_KES_CERT_FILE="${s.config_path}/kes/tls/client.crt"
-      MINIO_KMS_KES_KEY_FILE="${s.config_path}/kes/tls/client.key"
-      MINIO_KMS_KES_CAPATH="${s.config_path}/kes/tls/ca.crt"
+      MINIO_KMS_KES_CERT_FILE="${minio_server.config_path}/kes/tls/client.crt"
+      MINIO_KMS_KES_KEY_FILE="${minio_server.config_path}/kes/tls/client.key"
+      MINIO_KMS_KES_CAPATH="${minio_server.config_path}/kes/tls/ca.crt"
       MINIO_KMS_KES_KEY_NAME="${element(kes.clients, srv_idx).key}"
 %{ endif ~}
 %{ if prometheus_auth_type != "" ~}
@@ -120,26 +120,26 @@ write_files:
       GODEBUG="${godebug_settings}"
 %{ endif ~}
 
-%{ if try(s.audit.enable, false) ~}
-      MINIO_AUDIT_WEBHOOK_ENABLE_${s.audit.audit_id}="on"
-      MINIO_AUDIT_WEBHOOK_ENDPOINT_${s.audit.audit_id}="${s.audit.endpoint}"
-%{ if try(s.audit.auth_token, "") != "" ~}
-      MINIO_AUDIT_WEBHOOK_AUTH_TOKEN_${s.audit.audit_id}="${s.audit.auth_token}"
+%{ if try(minio_server.audit.enable, false) ~}
+      MINIO_AUDIT_WEBHOOK_ENABLE_${minio_server.audit.audit_id}="on"
+      MINIO_AUDIT_WEBHOOK_ENDPOINT_${minio_server.audit.audit_id}="${minio_server.audit.endpoint}"
+%{ if try(minio_server.audit.auth_token, "") != "" ~}
+      MINIO_AUDIT_WEBHOOK_AUTH_TOKEN_${minio_server.audit.audit_id}="${minio_server.audit.auth_token}"
 %{ endif ~}
-%{ if try(s.audit.queue_dir, "") != "" ~}
-      MINIO_AUDIT_WEBHOOK_QUEUE_DIR_${s.audit.audit_id}="${s.audit.queue_dir}"
+%{ if try(minio_server.audit.queue_dir, "") != "" ~}
+      MINIO_AUDIT_WEBHOOK_QUEUE_DIR_${minio_server.audit.audit_id}="${minio_server.audit.queue_dir}"
 %{ endif ~}
-%{ if try(s.audit.queue_size, "") != "" ~}
-      MINIO_AUDIT_WEBHOOK_QUEUE_LIMIT_${s.audit.audit_id}="${s.audit.queue_size}"
+%{ if try(minio_server.audit.queue_size, "") != "" ~}
+      MINIO_AUDIT_WEBHOOK_QUEUE_SIZE_${minio_server.audit.audit_id}="${minio_server.audit.queue_size}"
 %{ endif ~}
-%{ if try(s.audit.client_cert, "") != "" && try(s.audit.client_key, "") != "" ~}
-      MINIO_AUDIT_WEBHOOK_CLIENT_CERT_${s.audit.audit_id}="${s.config_path}/audit/tls/client.crt"
-      MINIO_AUDIT_WEBHOOK_CLIENT_KEY_${s.audit.audit_id}="${s.config_path}/audit/tls/client.key"
+%{ if try(minio_server.audit.client_cert, "") != "" && try(minio_server.audit.client_key, "") != "" ~}
+      MINIO_AUDIT_WEBHOOK_CLIENT_CERT_${minio_server.audit.audit_id}="${minio_server.config_path}/audit/tls/client.crt"
+      MINIO_AUDIT_WEBHOOK_CLIENT_KEY_${minio_server.audit.audit_id}="${minio_server.config_path}/audit/tls/client.key"
 %{ endif ~}
 %{ endif ~}
 
 %{ if setup_minio_service ~}
-  - path: /etc/systemd/system/${s.service_name}
+  - path: /etc/systemd/system/${minio_server.service_name}
     owner: root:root
     permissions: "0444"
     content: |
@@ -150,7 +150,7 @@ write_files:
       StartLimitIntervalSec=0
 
       [Service]
-      EnvironmentFile=-${s.config_path}/env
+      EnvironmentFile=-${minio_server.config_path}/env
       User=minio
       Group=minio
       Type=simple
@@ -164,9 +164,9 @@ write_files:
 %{ endfor ~}
 
 runcmd:
-%{ for srv_idx, s in minio_servers ~}
-  - chown -R minio:minio ${s.config_path}
-%{ if s.migrate_to ~}
+%{ for srv_idx, minio_server in minio_servers ~}
+  - chown -R minio:minio ${minio_server.config_path}
+%{ if minio_server.migrate_to ~}
   - /opt/minio_migrate_to_tenant.sh
 %{ endif ~}
 %{ endfor ~}
@@ -174,10 +174,10 @@ runcmd:
   - chown minio:minio ${vol_root}
 %{ endfor ~}
 
-%{ for srv_idx, s in minio_servers ~}
-%{ if try(s.audit.enable, false) && try(s.audit.queue_dir, "") != "" ~}
-  - mkdir -p ${s.audit.queue_dir}
-  - chown -R minio:minio ${s.audit.queue_dir}
+%{ for srv_idx, minio_server in minio_servers ~}
+%{ if try(minio_server.audit.enable, false) && try(minio_server.audit.queue_dir, "") != "" ~}
+  - mkdir -p ${minio_server.audit.queue_dir}
+  - chown -R minio:minio ${minio_server.audit.queue_dir}
 %{ endif ~}
 %{ endfor ~}
 
@@ -186,8 +186,8 @@ runcmd:
   - wget ${minio_download_url} -O /usr/local/bin/minio
   - chmod +x /usr/local/bin/minio
 %{ endif ~}
-%{ for srv_idx, s in minio_servers ~}
-  - systemctl enable ${s.service_name}
-  - systemctl start ${s.service_name}
+%{ for srv_idx, minio_server in minio_servers ~}
+  - systemctl enable ${minio_server.service_name}
+  - systemctl start ${minio_server.service_name}
 %{ endfor ~}
 %{ endif ~}

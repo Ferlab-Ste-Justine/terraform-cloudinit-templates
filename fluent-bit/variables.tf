@@ -27,13 +27,6 @@ variable "fluentbit" {
       shared_key = string
       ca_cert   = string
     })
-    http_input = optional(object({
-      enabled = bool
-      listen  = string
-      port    = number
-      tag     = string
-      path    = string 
-    }), null)
   })
 }
 
