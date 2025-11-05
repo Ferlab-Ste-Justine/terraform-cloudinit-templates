@@ -19,10 +19,10 @@ variable "minio_servers" {
     audit = optional(object({
       enable      = bool          
       endpoint    = string  
-      audit_id    = optional(string, "fb")          
+      audit_id    = optional(string)          
       auth_token  = optional(string)
       queue_dir   = optional(string)     
-      queue_size  = optional(string, "100000")
+      queue_size  = optional(string)
       client_cert = optional(string)
       client_key  = optional(string)
     }))
