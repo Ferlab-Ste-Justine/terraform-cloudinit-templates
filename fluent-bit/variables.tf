@@ -21,11 +21,11 @@ variable "fluentbit" {
       read_from_head = bool
     }))
     forward = object({
-      domain = string
-      port = number
-      hostname = string
+      domain    = string
+      port      = number
+      hostname  = string
       shared_key = string
-      ca_cert = string
+      ca_cert   = string
     })
   })
 }

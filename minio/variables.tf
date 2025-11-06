@@ -5,17 +5,27 @@ variable "minio_servers" {
     migrate_to   = bool
     api_port     = number
     console_port = number
-    tls          = object({
+    tls = object({
       server_cert = string
       server_key  = string
       ca_certs    = list(string)
     })
-    auth         = object({
+    auth = object({
       root_username = string
       root_password = string
     })
-    api_url      = string
-    console_url  = string
+    api_url     = string
+    console_url = string
+    audit = optional(object({
+      enable      = bool          
+      endpoint    = string  
+      audit_id    = optional(string)          
+      auth_token  = optional(string)
+      queue_dir   = optional(string)     
+      queue_size  = optional(string)
+      client_cert = optional(string)
+      client_key  = optional(string)
+    }))
   }))
 }
 
