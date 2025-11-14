@@ -14,7 +14,11 @@ disk_setup:
   ${volume.label}:
     table_type: gpt
     layout: True
+%{ if volume.overwrite ~}
+    overwrite: True
+%{ else ~}
     overwrite: False
+%{ endif ~}
 %{ endfor ~}
 fs_setup:
 %{ for volume in volumes ~}

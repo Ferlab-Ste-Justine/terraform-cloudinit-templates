@@ -6,5 +6,6 @@ variable "volumes" {
     filesystem    = string
     mount_path    = string
     mount_options = string
+    overwrite     = bool
   }))
 }
