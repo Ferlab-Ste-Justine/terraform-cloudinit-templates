@@ -39,6 +39,29 @@ write_files:
     permissions: "0400"
     content: |
       ${indent(6, tls.admin_key)}
+%{ if length(try(opensearch_cluster.audit.external.http_endpoints, [])) > 0 ~}
+%{ if try(opensearch_cluster.audit.external.auth.ca_cert, "") != "" ~}
+  - path: /etc/opensearch/audit-external/ca.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, opensearch_cluster.audit.external.auth.ca_cert)}
+%{ endif ~}
+%{ if try(opensearch_cluster.audit.external.auth.client_cert, "") != "" ~}
+  - path: /etc/opensearch/audit-external/client.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, opensearch_cluster.audit.external.auth.client_cert)}
+%{ endif ~}
+%{ if try(opensearch_cluster.audit.external.auth.client_key, "") != "" ~}
+  - path: /etc/opensearch/audit-external/client.key
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, opensearch_cluster.audit.external.auth.client_key)}
+%{ endif ~}
+%{ endif ~}
   - path: /usr/local/bin/bootstrap_opensearch
     owner: root:root
     permissions: "0555"
@@ -105,7 +128,7 @@ write_files:
     content: |
       #!/bin/bash
       #Heap size
-%{ if opensearch_host.manager ~}
+%{ if opensearch_host.cluster_manager ~}
       HEAP_SIZE=$(( $(grep MemTotal /proc/meminfo | awk '{print $2}') * 3 / 4 / 1024 ))
 %{ else ~}
       HEAP_SIZE=$(( $(grep MemTotal /proc/meminfo | awk '{print $2}') / 2 / 1024 ))
@@ -123,6 +146,9 @@ write_files:
 %{ if opensearch_host.bootstrap_security ~}
       openssl pkcs8 -in /etc/opensearch/client-certs/admin.key -topk8 -nocrypt -out /etc/opensearch/client-certs/admin-key-pk8.pem
 %{ endif ~}
+%{ if length(try(opensearch_cluster.audit.external.http_endpoints, [])) > 0 && try(opensearch_cluster.audit.external.auth.client_key, "") != "" ~}
+      openssl pkcs8 -in /etc/opensearch/audit-external/client.key -topk8 -nocrypt -out /etc/opensearch/audit-external/client-key-pk8.pem
+%{ endif ~}
   - path: /etc/opensearch/configuration/opensearch.yml
     owner: root:root
     permissions: "0444"
@@ -138,6 +164,13 @@ write_files:
     permissions: "0444"
     content: |
       ${indent(6, opensearch_security_conf.config)}
+%{ if try(opensearch_cluster.audit.enabled, false) ~}
+  - path: /etc/opensearch/configuration/opensearch-security/audit.yml
+    owner: root:root
+    permissions: "0444"
+    content: |
+      ${indent(6, opensearch_security_conf.audit)}
+%{ endif ~}
   - path: /etc/opensearch/configuration/opensearch-security/internal_users.yml
     owner: root:root
     permissions: "0444"
