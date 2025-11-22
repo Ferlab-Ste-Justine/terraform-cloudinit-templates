@@ -69,6 +69,17 @@ plugins.security.audit.config.enable_transport: true
 
 plugins.security.audit.config.index: ${opensearch_cluster.audit.index}
 plugins.security.audit.config.type: "auditlog"
+plugins.security.audit.config.exclude_sensitive_headers: true
+%{ if length(try(opensearch_cluster.audit.ignore_users, [])) > 0 ~}
+plugins.security.audit.config.ignore_users: ["${join("\", \"", opensearch_cluster.audit.ignore_users)}"]
+%{ else ~}
+plugins.security.audit.config.ignore_users: NONE
+%{ endif ~}
+%{ if length(try(opensearch_cluster.audit.ignore_requests, [])) > 0 ~}
+plugins.security.audit.config.ignore_requests: ["${join("\", \"", opensearch_cluster.audit.ignore_requests)}"]
+%{ else ~}
+plugins.security.audit.config.ignore_requests: NONE
+%{ endif ~}
 
 %{ if length(try(opensearch_cluster.audit.external.http_endpoints, [])) > 0 ~}
 plugins.security.audit.config.http_endpoints: [${join(", ", [for endpoint in opensearch_cluster.audit.external.http_endpoints: "\"${endpoint}\""])}]

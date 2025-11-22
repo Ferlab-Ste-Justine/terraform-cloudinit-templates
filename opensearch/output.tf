@@ -57,6 +57,12 @@ locals {
         opensearch_cluster = local.opensearch_cluster_with_defaults
       }
     )
+    audit = templatefile(
+      "${path.module}/opensearch_security/audit.yml.tpl",
+      {
+        opensearch_cluster = local.opensearch_cluster_with_defaults
+      }
+    )
   }
 }
 

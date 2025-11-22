@@ -164,6 +164,13 @@ write_files:
     permissions: "0444"
     content: |
       ${indent(6, opensearch_security_conf.config)}
+%{ if try(opensearch_cluster.audit.enabled, false) ~}
+  - path: /etc/opensearch/configuration/opensearch-security/audit.yml
+    owner: root:root
+    permissions: "0444"
+    content: |
+      ${indent(6, opensearch_security_conf.audit)}
+%{ endif ~}
   - path: /etc/opensearch/configuration/opensearch-security/internal_users.yml
     owner: root:root
     permissions: "0444"

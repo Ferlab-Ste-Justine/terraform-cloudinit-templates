@@ -54,7 +54,8 @@ variable "opensearch_cluster" {
         }
       })
 
-      ignore_users = optional(list(string), [])
+      ignore_users    = optional(list(string), [])
+      ignore_requests = optional(list(string), [])
     }), null)
   })
 }
