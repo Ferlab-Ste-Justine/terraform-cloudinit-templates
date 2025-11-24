@@ -21,7 +21,7 @@ variable "opensearch_cluster" {
     basic_auth_enabled            = bool
     cluster_name                  = string
     seed_hosts                    = list(string)
-    initial_cluster_manager_nodes = optional(list(string))
+    initial_cluster_manager_nodes = optional(list(string), [])
     verify_domains                = bool
 
     audit = optional(object({
@@ -30,20 +30,14 @@ variable "opensearch_cluster" {
 
       external = optional(object({
         http_endpoints = optional(list(string), [])
-        auth = optional(object({
+        auth = object({
           ca_cert     = optional(string, "")
           client_cert = optional(string, "")
           client_key  = optional(string, "")
           username    = optional(string, "")
           password    = optional(string, "")
-          }), {
-          ca_cert     = ""
-          client_cert = ""
-          client_key  = ""
-          username    = ""
-          password    = ""
         })
-        }), {
+      }), {
         http_endpoints = []
         auth = {
           ca_cert     = ""
@@ -56,7 +50,9 @@ variable "opensearch_cluster" {
 
       ignore_users    = optional(list(string), [])
       ignore_requests = optional(list(string), [])
-    }), null)
+    }), {
+      index = ""
+    })
   })
 }
 
