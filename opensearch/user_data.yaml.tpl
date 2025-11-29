@@ -168,7 +168,7 @@ write_files:
       }
       JSON
 
-      curl --silent --show-error \
+      curl --silent --show-error --fail \
         --cert /etc/opensearch/client-certs/admin.crt \
         --key /etc/opensearch/client-certs/admin.key \
         --cacert /etc/opensearch/ca-certs/ca.crt \
@@ -200,6 +200,11 @@ write_files:
         exit 0
       fi
 
+      if [ ! -f "$CA_CERT_FILE" ]; then
+        echo "Manifest upload aborted: CA certificate missing" >&2
+        exit 1
+      fi
+
       source "$CONF"
 
       if [ -z "$ENDPOINT" ] || [ -z "$ACCESS_KEY" ] || [ -z "$SECRET_KEY" ]; then
@@ -210,16 +215,10 @@ write_files:
       cp "$LOG_FILE" "$TMP_MANIFEST"
 
       mkdir -p "$CONFIG_DIR/certs/CAs"
+      cp "$CA_CERT_FILE" "$CONFIG_DIR/certs/CAs/minio-ca.crt"
 
-      MC_FLAGS="--config-dir $CONFIG_DIR"
-      if [ -f "$CA_CERT_FILE" ]; then
-        cp "$CA_CERT_FILE" "$CONFIG_DIR/certs/CAs/minio-ca.crt"
-      else
-        MC_FLAGS="$MC_FLAGS --insecure"
-      fi
-
-      /usr/local/bin/mc alias set $MC_FLAGS manifest "$ENDPOINT" "$ACCESS_KEY" "$SECRET_KEY"
-      /usr/local/bin/mc cp "$TMP_MANIFEST" "manifest/$${bucket}/$${manifest_path}" $MC_FLAGS
+      /usr/local/bin/mc --config-dir "$CONFIG_DIR" alias set manifest "$ENDPOINT" "$ACCESS_KEY" "$SECRET_KEY"
+      /usr/local/bin/mc --config-dir "$CONFIG_DIR" cp "$TMP_MANIFEST" "manifest/$${bucket}/$${manifest_path}"
       /usr/local/bin/mc alias rm manifest >/dev/null 2>&1
       rm -f "$TMP_MANIFEST"
 
@@ -582,7 +581,6 @@ runcmd:
   - systemctl daemon-reload
   - systemctl enable opensearch-snapshot.timer
   - systemctl start opensearch-snapshot.timer
-  - systemctl enable update-opensearch-snapshot-manifest.service
 %{ endif ~}
 %{ if try(snapshot_restore.enabled, false) ~}
   - /usr/local/bin/restore_opensearch_snapshot
