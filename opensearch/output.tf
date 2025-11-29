@@ -59,6 +59,8 @@ output "configuration" {
       opensearch_bootstrap_conf = local.opensearch_bootstrap_conf
       opensearch_runtime_conf   = local.opensearch_runtime_conf
       opensearch_security_conf  = local.opensearch_security_conf
+      snapshot_repository       = var.snapshot_repository
+      snapshot_restore          = var.snapshot_restore
     }
   )
 }

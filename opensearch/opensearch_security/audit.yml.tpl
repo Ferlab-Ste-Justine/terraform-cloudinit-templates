@@ -3,7 +3,7 @@ _meta:
   config_version: 2
 
 config:
-  enabled: ${tobool(try(opensearch_cluster.audit.enabled, false))}
+  enabled: ${try(opensearch_cluster.audit.enabled, false)}
 
   compliance:
 %{ if try(opensearch_cluster.audit.enabled, false) ~}
