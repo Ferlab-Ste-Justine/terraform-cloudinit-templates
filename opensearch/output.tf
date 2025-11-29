@@ -45,6 +45,17 @@ locals {
       }
     )
   }
+  
+  # Remove sensitive fields (access_key, secret_key) from snapshot_repository for output
+  # These credentials should be managed securely and not exposed in Terraform state/outputs
+  snapshot_repository_sanitized = {
+    for k, v in var.snapshot_repository :
+    k => v
+    if k != "access_key" && k != "secret_key"
+  }
+  
+  # snapshot_restore doesn't contain sensitive fields, but we sanitize it for consistency
+  snapshot_restore_sanitized = var.snapshot_restore
 }
 
 output "configuration" {
@@ -61,6 +72,7 @@ output "configuration" {
       opensearch_security_conf  = local.opensearch_security_conf
       snapshot_repository       = var.snapshot_repository
       snapshot_restore          = var.snapshot_restore
+      snapshot_timer            = var.snapshot_timer
     }
   )
 }

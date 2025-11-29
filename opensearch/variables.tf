@@ -74,7 +74,24 @@ variable "install_dependencies" {
 }
 
 variable "snapshot_repository" {
-  description = "S3 snapshot repository configuration"
+  description = <<-EOT
+    S3 snapshot repository configuration for OpenSearch snapshots.
+    
+    When enabled=true, this configures OpenSearch to store snapshots in an S3-compatible object store.
+    
+    Fields:
+    - enabled: Whether to enable snapshot repository configuration
+    - repository_name: Name for the snapshot repository in OpenSearch
+    - bucket: S3 bucket name (required if enabled)
+    - endpoint: S3 endpoint URL without protocol (e.g., "s3.amazonaws.com" or "minio.example.com:9000") (required if enabled)
+    - region: S3 region (e.g., "us-east-1") (required if enabled)
+    - base_path: Optional base path within bucket for snapshots
+    - protocol: Protocol for S3 connection ("https" or "http")
+    - path_style_access: Whether to use path-style S3 access (true for MinIO/most S3-compatible stores, false for AWS S3)
+    - access_key: S3 access key. SECURITY NOTE: IAM roles are preferred over static credentials when possible
+    - secret_key: S3 secret key. SECURITY NOTE: IAM roles are preferred over static credentials when possible
+    - ca_cert: Optional CA certificate in PEM format for TLS verification of S3 endpoint
+  EOT
   type = object({
     enabled           = bool
     repository_name   = string
@@ -101,10 +118,37 @@ variable "snapshot_repository" {
     secret_key        = ""
     ca_cert           = ""
   }
+  
+  # Validation: If snapshot repository is enabled, bucket, endpoint, and region must be non-empty
+  validation {
+    condition = (
+      !var.snapshot_repository.enabled ||
+      (
+        length(trim(var.snapshot_repository.bucket)) > 0 &&
+        length(trim(var.snapshot_repository.endpoint)) > 0 &&
+        length(trim(var.snapshot_repository.region)) > 0
+      )
+    )
+    error_message = "If snapshot_repository.enabled is true, then bucket, endpoint, and region must all be non-empty strings."
+  }
 }
 
 variable "snapshot_restore" {
-  description = "Optional snapshot restore configuration"
+  description = <<-EOT
+    Optional snapshot restore configuration for OpenSearch.
+    
+    When enabled=true, restores a snapshot during initial cluster bootstrap.
+    
+    Fields:
+    - enabled: Whether to restore a snapshot on bootstrap
+    - repository_name: Name of the snapshot repository to restore from (required if enabled)
+    - snapshot_name: Name of the snapshot to restore (required if enabled)
+    - wait_for_completion: Whether to wait for restore to complete before returning
+    - include_global_state: Whether to restore global cluster state
+    - indices: List of index patterns to restore (empty = all indices except security)
+    - rename_pattern: Regex pattern for renaming indices during restore
+    - rename_replacement: Replacement string for rename_pattern
+  EOT
   type = object({
     enabled              = bool
     repository_name      = string
@@ -124,5 +168,37 @@ variable "snapshot_restore" {
     indices              = []
     rename_pattern       = ""
     rename_replacement   = ""
+  }
+  
+  # Validation: If snapshot restore is enabled, repository_name and snapshot_name must be non-empty
+  validation {
+    condition = (
+      var.snapshot_restore.enabled == false ||
+      (
+        trim(var.snapshot_restore.repository_name) != "" &&
+        trim(var.snapshot_restore.snapshot_name) != ""
+      )
+    )
+    error_message = "If snapshot_restore.enabled is true, both repository_name and snapshot_name must be non-empty strings."
+  }
+}
+
+variable "snapshot_timer" {
+  description = <<-EOT
+    Configuration for the snapshot timer schedule.
+    
+    Controls when and how frequently OpenSearch snapshots are taken automatically.
+    
+    Fields:
+    - on_boot_sec: Initial delay after boot before first snapshot (systemd time format, e.g., "15min", "1h")
+    - on_unit_active_sec: Interval between snapshots (systemd time format, e.g., "4h", "1d")
+  EOT
+  type = object({
+    on_boot_sec        = optional(string, "15min")
+    on_unit_active_sec = optional(string, "4h")
+  })
+  default = {
+    on_boot_sec        = "15min"
+    on_unit_active_sec = "4h"
   }
 }
