@@ -283,11 +283,11 @@ write_files:
     permissions: "0444"
     content: |
       [Unit]
-      Description=Run OpenSearch snapshot every 4 hours
+      Description=Run OpenSearch snapshot periodically
 
       [Timer]
-      OnBootSec=15min
-      OnUnitActiveSec=4h
+      OnBootSec=${snapshot_repository.timer_on_boot_sec}s
+      OnUnitActiveSec=${snapshot_repository.timer_interval_sec}s
       Persistent=true
 
       [Install]
@@ -309,6 +309,13 @@ write_files:
         echo "Snapshot restore parameters are incomplete" >&2
         exit 1
       fi
+
+      echo "Waiting for OpenSearch cluster to become ready before restore"
+      STATUS=$(curl --silent --cert /etc/opensearch/client-certs/admin.crt --key /etc/opensearch/client-certs/admin.key --cacert /etc/opensearch/ca-certs/ca.crt https://${opensearch_host.bind_ip}:9200/_cluster/health | jq -r ".status")
+      until [ "$STATUS" = "green" ] || [ "$STATUS" = "yellow" ]; do
+        sleep 5
+        STATUS=$(curl --silent --cert /etc/opensearch/client-certs/admin.crt --key /etc/opensearch/client-certs/admin.key --cacert /etc/opensearch/ca-certs/ca.crt https://${opensearch_host.bind_ip}:9200/_cluster/health | jq -r ".status")
+      done
 
       PAYLOAD_FILE=$(mktemp)
       cat <<'JSON' > "$PAYLOAD_FILE"
