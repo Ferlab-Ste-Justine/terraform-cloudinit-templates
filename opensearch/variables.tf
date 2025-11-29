@@ -72,3 +72,57 @@ variable "install_dependencies" {
   type        = bool
   default     = true
 }
+
+variable "snapshot_repository" {
+  description = "S3 snapshot repository configuration"
+  type = object({
+    enabled           = bool
+    repository_name   = string
+    bucket            = string
+    endpoint          = string
+    region            = string
+    base_path         = optional(string, "")
+    protocol          = optional(string, "https")
+    path_style_access = optional(bool, true)
+    access_key        = optional(string, "")
+    secret_key        = optional(string, "")
+    ca_cert           = optional(string, "")
+  })
+  default = {
+    enabled           = false
+    repository_name   = "opensearch-snapshots"
+    bucket            = ""
+    endpoint          = ""
+    region            = ""
+    base_path         = ""
+    protocol          = "https"
+    path_style_access = true
+    access_key        = ""
+    secret_key        = ""
+    ca_cert           = ""
+  }
+}
+
+variable "snapshot_restore" {
+  description = "Optional snapshot restore configuration"
+  type = object({
+    enabled              = bool
+    repository_name      = string
+    snapshot_name        = string
+    wait_for_completion  = optional(bool, true)
+    include_global_state = optional(bool, true)
+    indices              = optional(list(string), [])
+    rename_pattern       = optional(string, "")
+    rename_replacement   = optional(string, "")
+  })
+  default = {
+    enabled              = false
+    repository_name      = ""
+    snapshot_name        = ""
+    wait_for_completion  = true
+    include_global_state = true
+    indices              = []
+    rename_pattern       = ""
+    rename_replacement   = ""
+  }
+}

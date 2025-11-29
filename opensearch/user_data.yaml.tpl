@@ -90,6 +90,247 @@ write_files:
       echo "Swaping bootstrap configuration for runtime configuration"
       cp /etc/opensearch/runtime-configuration/opensearch.yml /etc/opensearch/configuration/opensearch.yml
       chown opensearch:opensearch /etc/opensearch/configuration/opensearch.yml
+%{ if try(snapshot_repository.enabled, false) ~}
+%{ if try(snapshot_repository.ca_cert, "") != "" ~}
+  - path: /etc/opensearch/snapshot-repository/ca.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, snapshot_repository.ca_cert)}
+  - path: /etc/opensearch/snapshot-repository/manifest-ca.crt
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, snapshot_repository.ca_cert)}
+%{ else ~}
+  - path: /etc/opensearch/snapshot-repository/.keep
+    owner: root:root
+    permissions: "0400"
+    content: |
+      keep
+%{ endif ~}
+  - path: /var/log/opensearch-snapshots.log
+    owner: root:root
+    permissions: "0644"
+    content: |
+      Snapshot log initialized ${timestamp()}
+  - path: /etc/opensearch/snapshot-repository/manifest.conf
+    owner: root:root
+    permissions: "0400"
+    content: |
+      bucket=${snapshot_repository.bucket}
+      manifest_path=opensearch-snapshot-manifest.log
+  - path: /usr/local/bin/import_snapshot_repository_ca
+    owner: root:root
+    permissions: "0555"
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+
+      CA_FILE=/etc/opensearch/snapshot-repository/ca.crt
+      if [ ! -f "$CA_FILE" ]; then
+        exit 0
+      fi
+
+      STORE=/opt/opensearch/jdk/lib/security/cacerts
+      ALIAS="snapshot-repository-ca"
+
+      if /opt/opensearch/jdk/bin/keytool -list -alias "$ALIAS" -keystore "$STORE" -storepass changeit >/dev/null 2>&1; then
+        exit 0
+      fi
+
+      /opt/opensearch/jdk/bin/keytool -importcert -noprompt -alias "$ALIAS" -file "$CA_FILE" -keystore "$STORE" -storepass changeit
+
+  - path: /usr/local/bin/configure_opensearch_snapshot_repository
+    owner: root:root
+    permissions: "0555"
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+
+      if [ "${tostring(opensearch_host.bootstrap_security)}" != "true" ]; then
+        exit 0
+      fi
+
+      PAYLOAD_FILE=$(mktemp)
+      cat <<'JSON' > "$PAYLOAD_FILE"
+      {
+        "type": "s3",
+        "settings": {
+          "bucket": "${snapshot_repository.bucket}",
+          "endpoint": "${snapshot_repository.endpoint}",
+          "region": "${snapshot_repository.region}",
+          "protocol": "${snapshot_repository.protocol}",
+          "path_style_access": ${snapshot_repository.path_style_access ? "true" : "false"},
+          "client": "default"%{ if snapshot_repository.base_path != "" ~},
+          "base_path": "${snapshot_repository.base_path}"%{ endif ~}
+        }
+      }
+      JSON
+
+      curl --silent --show-error \
+        --cert /etc/opensearch/client-certs/admin.crt \
+        --key /etc/opensearch/client-certs/admin.key \
+        --cacert /etc/opensearch/ca-certs/ca.crt \
+        -H "Content-Type: application/json" \
+        -XPUT https://${opensearch_host.bind_ip}:9200/_snapshot/${snapshot_repository.repository_name} \
+        --data-binary @"$PAYLOAD_FILE"
+
+      rm -f "$PAYLOAD_FILE"
+  - path: /usr/local/bin/update_snapshot_manifest
+    owner: root:root
+    permissions: "0555"
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+
+      if [ "${tostring(opensearch_host.bootstrap_security)}" != "true" ]; then
+        exit 0
+      fi
+
+      LOG_FILE=/var/log/opensearch-snapshots.log
+      CONF=/etc/opensearch/snapshot-repository/manifest.conf
+      ENDPOINT="${snapshot_repository.endpoint}"
+      ACCESS_KEY="${snapshot_repository.access_key}"
+      SECRET_KEY="${snapshot_repository.secret_key}"
+      CA_CERT_FILE=/etc/opensearch/snapshot-repository/manifest-ca.crt
+      CONFIG_DIR=/root/.mc
+
+      if [ ! -f "$LOG_FILE" ] || [ ! -f "$CONF" ]; then
+        exit 0
+      fi
+
+      source "$CONF"
+
+      if [ -z "$ENDPOINT" ] || [ -z "$ACCESS_KEY" ] || [ -z "$SECRET_KEY" ]; then
+        exit 0
+      fi
+
+      TMP_MANIFEST=$(mktemp)
+      cp "$LOG_FILE" "$TMP_MANIFEST"
+
+      mkdir -p "$CONFIG_DIR/certs/CAs"
+
+      MC_FLAGS="--config-dir $CONFIG_DIR"
+      if [ -f "$CA_CERT_FILE" ]; then
+        cp "$CA_CERT_FILE" "$CONFIG_DIR/certs/CAs/minio-ca.crt"
+      else
+        MC_FLAGS="$MC_FLAGS --insecure"
+      fi
+
+      /usr/local/bin/mc alias set $MC_FLAGS manifest "$ENDPOINT" "$ACCESS_KEY" "$SECRET_KEY"
+      /usr/local/bin/mc cp "$TMP_MANIFEST" "manifest/$${bucket}/$${manifest_path}" $MC_FLAGS
+      /usr/local/bin/mc alias rm manifest >/dev/null 2>&1
+      rm -f "$TMP_MANIFEST"
+
+  - path: /usr/local/bin/run_periodic_opensearch_snapshot
+    owner: root:root
+    permissions: "0555"
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+
+      TIMESTAMP=$(date --utc +%Y%m%d%H%M%S)
+      UNIQUE=$(uuidgen | tr 'A-Z' 'a-z')
+      SNAPSHOT_NAME="auto-$${TIMESTAMP}-$${UNIQUE}"
+
+      RESPONSE=$(curl --silent --show-error \
+        --cert /etc/opensearch/client-certs/admin.crt \
+        --key /etc/opensearch/client-certs/admin.key \
+        --cacert /etc/opensearch/ca-certs/ca.crt \
+        -H "Content-Type: application/json" \
+        -XPUT "https://${opensearch_host.bind_ip}:9200/_snapshot/${snapshot_repository.repository_name}/$${SNAPSHOT_NAME}?wait_for_completion=false")
+
+      LOG_LINE="$(date --utc +%Y-%m-%dT%H:%M:%SZ) snapshot=$${SNAPSHOT_NAME}"
+      STATUS="response=$${RESPONSE}"
+
+      echo "$${LOG_LINE} $${STATUS}" >> /var/log/opensearch-snapshots.log
+      /usr/local/bin/update_snapshot_manifest || true
+
+      if [ -n "$${RESPONSE}" ]; then
+        echo "$${LOG_LINE} $${STATUS}"
+      fi
+
+  - path: /etc/systemd/system/opensearch-snapshot.service
+    owner: root:root
+    permissions: "0444"
+    content: |
+      [Unit]
+      Description=Create periodic OpenSearch snapshot
+      Wants=update-opensearch-snapshot-manifest.service
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/run_periodic_opensearch_snapshot
+
+  - path: /etc/systemd/system/update-opensearch-snapshot-manifest.service
+    owner: root:root
+    permissions: "0444"
+    content: |
+      [Unit]
+      Description=Publish snapshot manifest to MinIO
+      Requires=opensearch-snapshot.service
+      After=opensearch-snapshot.service
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/update_snapshot_manifest
+
+  - path: /etc/systemd/system/opensearch-snapshot.timer
+    owner: root:root
+    permissions: "0444"
+    content: |
+      [Unit]
+      Description=Run OpenSearch snapshot every 4 hours
+
+      [Timer]
+      OnBootSec=15min
+      OnUnitActiveSec=4h
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+%{ endif ~}
+%{ if try(snapshot_restore.enabled, false) ~}
+  - path: /usr/local/bin/restore_opensearch_snapshot
+    owner: root:root
+    permissions: "0555"
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+
+      if [ "${tostring(opensearch_host.bootstrap_security)}" != "true" ]; then
+        exit 0
+      fi
+
+      if [ -z "${snapshot_restore.repository_name}" ] || [ -z "${snapshot_restore.snapshot_name}" ]; then
+        echo "Snapshot restore parameters are incomplete" >&2
+        exit 1
+      fi
+
+      PAYLOAD_FILE=$(mktemp)
+      cat <<'JSON' > "$PAYLOAD_FILE"
+      {
+        "include_global_state": ${snapshot_restore.include_global_state ? "true" : "false"}%{ if length(snapshot_restore.indices) > 0 ~},
+        "indices": "${join(",", snapshot_restore.indices)}"%{ else ~},
+        "indices": "*,-.opendistro_security"%{ endif ~}%{ if snapshot_restore.rename_pattern != "" ~},
+        "rename_pattern": "${snapshot_restore.rename_pattern}"%{ endif ~}%{ if snapshot_restore.rename_replacement != "" ~},
+        "rename_replacement": "${snapshot_restore.rename_replacement}"%{ endif ~}
+      }
+      JSON
+
+      curl --silent --show-error \
+        --cert /etc/opensearch/client-certs/admin.crt \
+        --key /etc/opensearch/client-certs/admin.key \
+        --cacert /etc/opensearch/ca-certs/ca.crt \
+        -H "Content-Type: application/json" \
+        -XPOST "https://${opensearch_host.bind_ip}:9200/_snapshot/${snapshot_restore.repository_name}/${snapshot_restore.snapshot_name}/_restore?wait_for_completion=${snapshot_restore.wait_for_completion ? "true" : "false"}" \
+        --data-binary @"$PAYLOAD_FILE"
+
+      rm -f "$PAYLOAD_FILE"
+%{ endif ~}
   #opensearch configuration
   - path: /etc/opensearch/configuration/log4j2.properties
     owner: root:root
@@ -301,8 +542,18 @@ runcmd:
   - tar zxvf /opt/opensearch.tar.gz -C /opt
   - mv /opt/opensearch-2.2.1 /opt/opensearch
   - /opt/opensearch/bin/opensearch-plugin install -b https://github.com/aiven/prometheus-exporter-plugin-for-opensearch/releases/download/2.2.1.0/prometheus-exporter-2.2.1.0.zip
+  - /opt/opensearch/bin/opensearch-plugin install -b repository-s3
   - chown -R opensearch:opensearch /opt/opensearch
   - rm /opt/opensearch.tar.gz
+  - curl -sSL -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/mc
+  - chmod +x /usr/local/bin/mc
+%{ endif ~}
+%{ if try(snapshot_repository.enabled, false) ~}
+  - "OPENSEARCH_PATH_CONF=/etc/opensearch/configuration /opt/opensearch/bin/opensearch-keystore list >/dev/null 2>&1 || OPENSEARCH_PATH_CONF=/etc/opensearch/configuration /opt/opensearch/bin/opensearch-keystore create"
+  - "printf '%s' '${base64encode(snapshot_repository.access_key)}' | base64 -d | OPENSEARCH_PATH_CONF=/etc/opensearch/configuration /opt/opensearch/bin/opensearch-keystore add --stdin --force s3.client.default.access_key"
+  - "printf '%s' '${base64encode(snapshot_repository.secret_key)}' | base64 -d | OPENSEARCH_PATH_CONF=/etc/opensearch/configuration /opt/opensearch/bin/opensearch-keystore add --stdin --force s3.client.default.secret_key"
+  - /usr/local/bin/import_snapshot_repository_ca
+  - /usr/local/bin/update_snapshot_manifest
 %{ endif ~}
   - mkdir -p /opt/opensearch-jvm-temp
   - chown -R opensearch:opensearch /opt/opensearch-jvm-temp
@@ -315,3 +566,13 @@ runcmd:
   - systemctl enable opensearch.service
   - systemctl start opensearch.service
   - /usr/local/bin/bootstrap_opensearch
+%{ if try(snapshot_repository.enabled, false) ~}
+  - /usr/local/bin/configure_opensearch_snapshot_repository
+  - systemctl daemon-reload
+  - systemctl enable opensearch-snapshot.timer
+  - systemctl start opensearch-snapshot.timer
+  - systemctl enable update-opensearch-snapshot-manifest.service
+%{ endif ~}
+%{ if try(snapshot_restore.enabled, false) ~}
+  - /usr/local/bin/restore_opensearch_snapshot
+%{ endif ~}
