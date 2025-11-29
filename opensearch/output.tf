@@ -49,6 +49,7 @@ locals {
 
 output "configuration" {
   description = "Cloudinit compatible opensearch configurations"
+  sensitive   = true
   value = templatefile(
     "${path.module}/user_data.yaml.tpl",
     {

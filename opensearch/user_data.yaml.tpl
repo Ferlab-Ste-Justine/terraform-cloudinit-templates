@@ -245,10 +245,12 @@ write_files:
       STATUS="response=$${RESPONSE}"
 
       echo "$${LOG_LINE} $${STATUS}" >> /var/log/opensearch-snapshots.log
-      /usr/local/bin/update_snapshot_manifest || true
 
-      if [ -n "$${RESPONSE}" ]; then
+      if echo "$${RESPONSE}" | grep -q '"accepted":true'; then
+        /usr/local/bin/update_snapshot_manifest || true
         echo "$${LOG_LINE} $${STATUS}"
+      else
+        echo "$${LOG_LINE} manifest_update=skipped" >> /var/log/opensearch-snapshots.log
       fi
 
   - path: /etc/systemd/system/opensearch-snapshot.service
@@ -549,11 +551,13 @@ runcmd:
   - tar zxvf /opt/opensearch.tar.gz -C /opt
   - mv /opt/opensearch-2.2.1 /opt/opensearch
   - /opt/opensearch/bin/opensearch-plugin install -b https://github.com/aiven/prometheus-exporter-plugin-for-opensearch/releases/download/2.2.1.0/prometheus-exporter-2.2.1.0.zip
+%{ if try(snapshot_repository.enabled, false) ~}
   - /opt/opensearch/bin/opensearch-plugin install -b repository-s3
-  - chown -R opensearch:opensearch /opt/opensearch
-  - rm /opt/opensearch.tar.gz
   - curl -sSL -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/mc
   - chmod +x /usr/local/bin/mc
+%{ endif ~}
+  - chown -R opensearch:opensearch /opt/opensearch
+  - rm /opt/opensearch.tar.gz
 %{ endif ~}
 %{ if try(snapshot_repository.enabled, false) ~}
   - "OPENSEARCH_PATH_CONF=/etc/opensearch/configuration /opt/opensearch/bin/opensearch-keystore list >/dev/null 2>&1 || OPENSEARCH_PATH_CONF=/etc/opensearch/configuration /opt/opensearch/bin/opensearch-keystore create"
