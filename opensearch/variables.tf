@@ -87,6 +87,8 @@ variable "snapshot_repository" {
     access_key        = optional(string, "")
     secret_key        = optional(string, "")
     ca_cert           = optional(string, "")
+    timer_on_boot_sec = optional(number, 900)
+    timer_interval_sec = optional(number, 14400)
   })
   default = {
     enabled           = false
@@ -100,6 +102,20 @@ variable "snapshot_repository" {
     access_key        = ""
     secret_key        = ""
     ca_cert           = ""
+    timer_on_boot_sec = 900
+    timer_interval_sec = 14400
+  }
+
+  validation {
+    condition = !(
+      var.snapshot_repository.enabled &&
+      (
+        var.snapshot_repository.bucket == "" ||
+        var.snapshot_repository.endpoint == "" ||
+        var.snapshot_repository.region == ""
+      )
+    )
+    error_message = "When snapshot_repository is enabled, bucket, endpoint, and region must be provided."
   }
 }
 
@@ -124,5 +140,16 @@ variable "snapshot_restore" {
     indices              = []
     rename_pattern       = ""
     rename_replacement   = ""
+  }
+
+  validation {
+    condition = !(
+      var.snapshot_restore.enabled &&
+      (
+        var.snapshot_restore.repository_name == "" ||
+        var.snapshot_restore.snapshot_name == ""
+      )
+    )
+    error_message = "When snapshot_restore is enabled, repository_name and snapshot_name must be provided."
   }
 }
