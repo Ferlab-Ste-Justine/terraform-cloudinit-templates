@@ -202,7 +202,6 @@ write_files:
       echo "Snapshot repository configured successfully"
       rm -f "$PAYLOAD_FILE" "$RESPONSE_FILE"
 
-      rm -f "$PAYLOAD_FILE"
   - path: /usr/local/bin/update_snapshot_manifest
     owner: root:root
     permissions: "0555"
@@ -264,16 +263,17 @@ write_files:
       
       # Remove manifest alias with better error handling
       # Only suppress "alias not found" errors, log other errors
-      if ! /usr/local/bin/mc alias rm manifest 2>mc_rm_err.log; then
-        if grep -q "alias.*not found" mc_rm_err.log 2>/dev/null; then
+      MC_RM_ERR=$(mktemp)
+      if ! /usr/local/bin/mc alias rm manifest 2>"$MC_RM_ERR"; then
+        if grep -q "alias.*not found" "$MC_RM_ERR" 2>/dev/null; then
           # Expected error, suppress
           :
         else
           echo "Warning: mc alias rm manifest failed:" >&2
-          cat mc_rm_err.log >&2
+          cat "$MC_RM_ERR" >&2
         fi
       fi
-      rm -f mc_rm_err.log "$TMP_MANIFEST"
+      rm -f "$MC_RM_ERR" "$TMP_MANIFEST"
 
   - path: /usr/local/bin/run_periodic_opensearch_snapshot
     owner: root:root
@@ -626,12 +626,13 @@ runcmd:
   # Install repository-s3 plugin conditionally when snapshots are enabled
   - /opt/opensearch/bin/opensearch-plugin install -b repository-s3
   # Install MinIO client (mc) with fixed version and checksum verification for security
-  - MC_VERSION="RELEASE.2024-11-17T19-35-25Z"
-  - curl -sSL -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/archive/mc.$${MC_VERSION}
-  - curl -sSL -o /usr/local/bin/mc.sha256sum https://dl.min.io/client/mc/release/linux-amd64/archive/mc.$${MC_VERSION}.sha256sum
-  - cd /usr/local/bin && sha256sum -c mc.sha256sum
-  - chmod +x /usr/local/bin/mc
-  - rm /usr/local/bin/mc.sha256sum
+  - |
+    MC_VERSION="RELEASE.2024-11-17T19-35-25Z"
+    curl -sSL -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/archive/mc.$MC_VERSION
+    curl -sSL -o /usr/local/bin/mc.sha256sum https://dl.min.io/client/mc/release/linux-amd64/archive/mc.$MC_VERSION.sha256sum
+    cd /usr/local/bin && sha256sum -c mc.sha256sum
+    chmod +x /usr/local/bin/mc
+    rm /usr/local/bin/mc.sha256sum
 %{ endif ~}
 %{ if try(snapshot_repository.enabled, false) ~}
   # Configure S3 credentials in OpenSearch keystore

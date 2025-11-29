@@ -60,6 +60,10 @@ locals {
 
 output "configuration" {
   description = "Cloudinit compatible opensearch configurations"
+  # Mark as sensitive because the cloud-init configuration contains S3 credentials
+  # embedded in scripts. While these are needed for functionality, they should not
+  # be exposed in Terraform CLI output or logs.
+  sensitive = true
   value = templatefile(
     "${path.module}/user_data.yaml.tpl",
     {
