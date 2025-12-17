@@ -61,12 +61,12 @@ write_files:
       fi
 
       TMP_PREFIX="/tmp/snapshot-repo-ca"
-      rm -f ${TMP_PREFIX}-*.pem || true
+      rm -f $${TMP_PREFIX}-*.pem || true
       awk -v prefix="$TMP_PREFIX" '/BEGIN CERTIFICATE/{i++} {print > (prefix "-" i ".pem")}' "$CA_FILE"
 
       shopt -s nullglob
       imported=0
-      for cert in ${TMP_PREFIX}-*.pem; do
+      for cert in $${TMP_PREFIX}-*.pem; do
         if openssl x509 -in "$cert" -noout -text | grep -q "CA:TRUE"; then
           alias="snapshot-repository-$(basename "$cert" .pem)"
           if ! /opt/opensearch/jdk/bin/keytool -list -alias "$alias" -keystore "$CACERTS" -storepass changeit >/dev/null 2>&1; then
@@ -80,7 +80,7 @@ write_files:
         fi
       done
       shopt -u nullglob
-      rm -f ${TMP_PREFIX}-*.pem || true
+      rm -f $${TMP_PREFIX}-*.pem || true
 
       chown opensearch:opensearch "$OS_KEYSTORE"
       chmod 600 "$OS_KEYSTORE"
