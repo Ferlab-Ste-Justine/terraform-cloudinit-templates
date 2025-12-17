@@ -62,7 +62,7 @@ write_files:
 
       TMP_PREFIX="/tmp/snapshot-repo-ca"
       rm -f $${TMP_PREFIX}-*.pem || true
-      awk -v prefix="$TMP_PREFIX" '/BEGIN CERTIFICATE/{i++} {print > (prefix "-" i ".pem")}' "$CA_FILE"
+      awk -v prefix="$TMP_PREFIX" 'BEGIN{i=0} /BEGIN CERTIFICATE/{i++} {print > (prefix "-" i ".pem")}' "$CA_FILE"
 
       shopt -s nullglob
       imported=0
@@ -131,14 +131,58 @@ write_files:
 
 %{ for policy in opensearch_cluster.index_lifecycle_policies ~}
       echo "Ensuring ILM policy ${policy.name}"
-      "$${CURL_BASE[@]}" \
+      if ! RESPONSE=$("$${CURL_BASE[@]}" \
         -XPUT "$${ENDPOINT}/_plugins/_ism/policies/${policy.name}" \
-        -d "{\"policy\":{\"description\":\"${policy.name}\",\"default_state\":\"hot\",\"states\":[{\"name\":\"hot\",\"actions\":[],\"transitions\":[{\"state_name\":\"delete\",\"conditions\":{\"min_index_age\":\"${policy.delete_min_age}\"}}]},{\"name\":\"delete\",\"actions\":[{\"delete\":{}}],\"transitions\":[]}]} }"
+        -d @- <<'JSON'
+{ "policy": {
+    "description": "${policy.name}",
+    "default_state": "hot",
+    "states": [
+      {
+        "name": "hot",
+        "actions": [],
+        "transitions": [
+          {
+            "state_name": "delete",
+            "conditions": {
+              "min_index_age": "${policy.delete_min_age}"
+            }
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "actions": [
+          { "delete": {} }
+        ],
+        "transitions": []
+      }
+    ]
+  }
+}
+JSON
+      ); then
+        echo "Failed to configure policy ${policy.name}: $${RESPONSE}" >&2
+        exit 1
+      fi
 
       echo "Ensuring index template ${policy.template_name}"
-      "$${CURL_BASE[@]}" \
+      if ! RESPONSE=$("$${CURL_BASE[@]}" \
         -XPUT "$${ENDPOINT}/_index_template/${policy.template_name}" \
-        -d "{\"index_patterns\": ${jsonencode(policy.index_patterns)}, \"priority\": ${policy.template_priority}, \"template\": { \"settings\": { \"index.opendistro.index_state_management.policy_id\": \"${policy.name}\" } } }"
+        -d @- <<'JSON'
+{ "index_patterns": ${jsonencode(policy.index_patterns)},
+  "priority": ${policy.template_priority},
+  "template": {
+    "settings": {
+      "index.opendistro.index_state_management.policy_id": "${policy.name}"
+    }
+  }
+}
+JSON
+      ); then
+        echo "Failed to configure template ${policy.template_name}: $${RESPONSE}" >&2
+        exit 1
+      fi
 
 %{ endfor ~}
       echo "Configured ${length(opensearch_cluster.index_lifecycle_policies)} ILM policies"
@@ -394,18 +438,21 @@ runcmd:
   - echo 'vm.swappiness = 1' >> /etc/sysctl.conf
   - sysctl -p
   - chown -R opensearch:opensearch /etc/opensearch
-  - systemctl enable opensearch.service
-  - systemctl start opensearch.service
-  - /usr/local/bin/bootstrap_opensearch
-%{ if length(try(opensearch_cluster.index_lifecycle_policies, [])) > 0 ~}
-  - /usr/local/bin/configure_opensearch_ilm
-%{ endif ~}
 %{ if try(snapshot_repository.access_key, "") != "" ~}
-  - "printf '%s' '${base64encode(snapshot_repository.access_key)}' | base64 -d | OPENSEARCH_PATH_CONF=/etc/opensearch/configuration /opt/opensearch/bin/opensearch-keystore add --stdin --force s3.client.default.access_key"
+  - |
+      cat <<'EOF' | OPENSEARCH_PATH_CONF=/etc/opensearch/configuration /opt/opensearch/bin/opensearch-keystore add --stdin --force s3.client.default.access_key
+      ${snapshot_repository.access_key}
+      EOF
 %{ endif ~}
 %{ if try(snapshot_repository.secret_key, "") != "" ~}
-  - "printf '%s' '${base64encode(snapshot_repository.secret_key)}' | base64 -d | OPENSEARCH_PATH_CONF=/etc/opensearch/configuration /opt/opensearch/bin/opensearch-keystore add --stdin --force s3.client.default.secret_key"
+  - |
+      cat <<'EOF' | OPENSEARCH_PATH_CONF=/etc/opensearch/configuration /opt/opensearch/bin/opensearch-keystore add --stdin --force s3.client.default.secret_key
+      ${snapshot_repository.secret_key}
+      EOF
 %{ endif ~}
 %{ if try(snapshot_repository.ca_cert, "") != "" ~}
   - /usr/local/bin/import_snapshot_repository_ca
 %{ endif ~}
+  - systemctl enable opensearch.service
+  - systemctl start opensearch.service
+  - /usr/local/bin/bootstrap_opensearch

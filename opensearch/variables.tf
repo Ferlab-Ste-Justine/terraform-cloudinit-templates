@@ -53,6 +53,14 @@ variable "opensearch_cluster" {
     }), {
       index = ""
     })
+
+    index_lifecycle_policies = optional(list(object({
+      name              = string
+      delete_min_age    = string
+      index_patterns    = list(string)
+      template_name     = string
+      template_priority = number
+    })), [])
   })
   sensitive = true
 }
