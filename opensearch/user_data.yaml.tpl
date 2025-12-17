@@ -132,13 +132,13 @@ write_files:
 %{ for policy in opensearch_cluster.index_lifecycle_policies ~}
       echo "Ensuring ILM policy ${policy.name}"
       "$${CURL_BASE[@]}" \
-        -XPUT "$${ENDPOINT}/_ilm/policy/${policy.name}" \
-        -d "{\"policy\":{\"phases\":{\"hot\":{\"actions\":{}},\"delete\":{\"min_age\":\"${policy.delete_min_age}\",\"actions\":{\"delete\":{}}}}}}"
+        -XPUT "$${ENDPOINT}/_plugins/_ism/policies/${policy.name}" \
+        -d "{\"policy\":{\"description\":\"${policy.name}\",\"default_state\":\"hot\",\"states\":[{\"name\":\"hot\",\"actions\":[],\"transitions\":[{\"state_name\":\"delete\",\"conditions\":{\"min_index_age\":\"${policy.delete_min_age}\"}}]},{\"name\":\"delete\",\"actions\":[{\"delete\":{}}],\"transitions\":[]}]} }"
 
       echo "Ensuring index template ${policy.template_name}"
       "$${CURL_BASE[@]}" \
         -XPUT "$${ENDPOINT}/_index_template/${policy.template_name}" \
-        -d "{\"index_patterns\": ${jsonencode(policy.index_patterns)}, \"priority\": ${policy.template_priority}, \"template\": { \"settings\": { \"index.lifecycle.name\": \"${policy.name}\" } } }"
+        -d "{\"index_patterns\": ${jsonencode(policy.index_patterns)}, \"priority\": ${policy.template_priority}, \"template\": { \"settings\": { \"index.opendistro.index_state_management.policy_id\": \"${policy.name}\" } } }"
 
 %{ endfor ~}
       echo "Configured ${length(opensearch_cluster.index_lifecycle_policies)} ILM policies"
