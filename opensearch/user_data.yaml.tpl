@@ -112,6 +112,37 @@ write_files:
       ${indent(6, opensearch_cluster.audit.external.auth.client_key)}
 %{ endif ~}
 %{ endif ~}
+%{ if length(try(opensearch_cluster.index_lifecycle_policies, [])) > 0 ~}
+  - path: /usr/local/bin/configure_opensearch_ilm
+    owner: root:root
+    permissions: "0555"
+    content: |
+      #!/bin/bash
+      set -euo pipefail
+
+      ENDPOINT="https://${opensearch_host.bind_ip}:9200"
+      CURL_BASE=(
+        curl --silent --show-error --fail
+        --cacert /etc/opensearch/ca-certs/ca.crt
+        --cert /etc/opensearch/client-certs/admin.crt
+        --key /etc/opensearch/client-certs/admin.key
+        -H 'Content-Type: application/json'
+      )
+
+%{ for policy in opensearch_cluster.index_lifecycle_policies ~}
+      echo "Ensuring ILM policy ${policy.name}"
+      "$${CURL_BASE[@]}" \
+        -XPUT "$${ENDPOINT}/_ilm/policy/${policy.name}" \
+        -d "{\"policy\":{\"phases\":{\"hot\":{\"actions\":{}},\"delete\":{\"min_age\":\"${policy.delete_min_age}\",\"actions\":{\"delete\":{}}}}}}"
+
+      echo "Ensuring index template ${policy.template_name}"
+      "$${CURL_BASE[@]}" \
+        -XPUT "$${ENDPOINT}/_index_template/${policy.template_name}" \
+        -d "{\"index_patterns\": ${jsonencode(policy.index_patterns)}, \"priority\": ${policy.template_priority}, \"template\": { \"settings\": { \"index.lifecycle.name\": \"${policy.name}\" } } }"
+
+%{ endfor ~}
+      echo "Configured ${length(opensearch_cluster.index_lifecycle_policies)} ILM policies"
+%{ endif ~}
   - path: /usr/local/bin/bootstrap_opensearch
     owner: root:root
     permissions: "0555"
@@ -366,6 +397,9 @@ runcmd:
   - systemctl enable opensearch.service
   - systemctl start opensearch.service
   - /usr/local/bin/bootstrap_opensearch
+%{ if length(try(opensearch_cluster.index_lifecycle_policies, [])) > 0 ~}
+  - /usr/local/bin/configure_opensearch_ilm
+%{ endif ~}
 %{ if try(snapshot_repository.access_key, "") != "" ~}
   - "printf '%s' '${base64encode(snapshot_repository.access_key)}' | base64 -d | OPENSEARCH_PATH_CONF=/etc/opensearch/configuration /opt/opensearch/bin/opensearch-keystore add --stdin --force s3.client.default.access_key"
 %{ endif ~}
