@@ -53,18 +53,41 @@ write_files:
       set -euo pipefail
 
       CA_FILE=/etc/opensearch/snapshot-repository/ca.crt
-      if [ ! -f "$CA_FILE" ] || [ ! -s "$CA_FILE" ]; then
+      CACERTS="/opt/opensearch/jdk/lib/security/cacerts"
+      OS_KEYSTORE="/etc/opensearch/configuration/opensearch.keystore"
+
+      if [ ! -s "$CA_FILE" ]; then
         exit 0
       fi
 
-      STORE=/opt/opensearch/jdk/lib/security/cacerts
-      ALIAS="snapshot-repository-ca"
+      TMP_PREFIX="/tmp/snapshot-repo-ca"
+      rm -f ${TMP_PREFIX}-*.pem || true
+      awk -v prefix="$TMP_PREFIX" '/BEGIN CERTIFICATE/{i++} {print > (prefix "-" i ".pem")}' "$CA_FILE"
 
-      if /opt/opensearch/jdk/bin/keytool -list -alias "$ALIAS" -keystore "$STORE" -storepass changeit >/dev/null 2>&1; then
-        exit 0
+      shopt -s nullglob
+      imported=0
+      for cert in ${TMP_PREFIX}-*.pem; do
+        if openssl x509 -in "$cert" -noout -text | grep -q "CA:TRUE"; then
+          alias="snapshot-repository-$(basename "$cert" .pem)"
+          if ! /opt/opensearch/jdk/bin/keytool -list -alias "$alias" -keystore "$CACERTS" -storepass changeit >/dev/null 2>&1; then
+            /opt/opensearch/jdk/bin/keytool -importcert -noprompt \
+              -alias "$alias" \
+              -file "$cert" \
+              -keystore "$CACERTS" \
+              -storepass changeit
+            imported=1
+          fi
+        fi
+      done
+      shopt -u nullglob
+      rm -f ${TMP_PREFIX}-*.pem || true
+
+      chown opensearch:opensearch "$OS_KEYSTORE"
+      chmod 600 "$OS_KEYSTORE"
+
+      if [ "$imported" -eq 1 ]; then
+        systemctl restart opensearch
       fi
-
-      /opt/opensearch/jdk/bin/keytool -importcert -noprompt -alias "$ALIAS" -file "$CA_FILE" -keystore "$STORE" -storepass changeit
 %{ endif ~}
 %{ if length(try(opensearch_cluster.audit.external.http_endpoints, [])) > 0 ~}
 %{ if try(opensearch_cluster.audit.external.auth.ca_cert, "") != "" ~}
