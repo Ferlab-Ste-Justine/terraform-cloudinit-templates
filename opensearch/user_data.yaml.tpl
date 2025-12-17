@@ -134,32 +134,32 @@ write_files:
       if ! RESPONSE=$("$${CURL_BASE[@]}" \
         -XPUT "$${ENDPOINT}/_plugins/_ism/policies/${policy.name}" \
         -d @- <<'JSON'
-{ "policy": {
-    "description": "${policy.name}",
-    "default_state": "hot",
-    "states": [
-      {
-        "name": "hot",
-        "actions": [],
-        "transitions": [
-          {
-            "state_name": "delete",
-            "conditions": {
-              "min_index_age": "${policy.delete_min_age}"
+          { "policy": {
+              "description": "${policy.name}",
+              "default_state": "hot",
+              "states": [
+                {
+                  "name": "hot",
+                  "actions": [],
+                  "transitions": [
+                    {
+                      "state_name": "delete",
+                      "conditions": {
+                        "min_index_age": "${policy.delete_min_age}"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "delete",
+                  "actions": [
+                    { "delete": {} }
+                  ],
+                  "transitions": []
+                }
+              ]
             }
           }
-        ]
-      },
-      {
-        "name": "delete",
-        "actions": [
-          { "delete": {} }
-        ],
-        "transitions": []
-      }
-    ]
-  }
-}
 JSON
       ); then
         echo "Failed to configure policy ${policy.name}: $${RESPONSE}" >&2
@@ -170,14 +170,14 @@ JSON
       if ! RESPONSE=$("$${CURL_BASE[@]}" \
         -XPUT "$${ENDPOINT}/_index_template/${policy.template_name}" \
         -d @- <<'JSON'
-{ "index_patterns": ${jsonencode(policy.index_patterns)},
-  "priority": ${policy.template_priority},
-  "template": {
-    "settings": {
-      "index.opendistro.index_state_management.policy_id": "${policy.name}"
-    }
-  }
-}
+          { "index_patterns": ${jsonencode(policy.index_patterns)},
+            "priority": ${policy.template_priority},
+            "template": {
+              "settings": {
+                "index.opendistro.index_state_management.policy_id": "${policy.name}"
+              }
+            }
+          }
 JSON
       ); then
         echo "Failed to configure template ${policy.template_name}: $${RESPONSE}" >&2
