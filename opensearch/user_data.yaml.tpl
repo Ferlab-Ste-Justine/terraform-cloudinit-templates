@@ -131,55 +131,55 @@ write_files:
 
 %{ for policy in opensearch_cluster.index_lifecycle_policies ~}
       echo "Ensuring ILM policy ${policy.name}"
-      if ! RESPONSE=$("$${CURL_BASE[@]}" \
-        -XPUT "$${ENDPOINT}/_plugins/_ism/policies/${policy.name}" \
-        -d @- <<'JSON'
-          { "policy": {
-              "description": "${policy.name}",
-              "default_state": "hot",
-              "states": [
-                {
-                  "name": "hot",
-                  "actions": [],
-                  "transitions": [
-                    {
-                      "state_name": "delete",
-                      "conditions": {
-                        "min_index_age": "${policy.delete_min_age}"
-                      }
-                    }
-                  ]
-                },
-                {
-                  "name": "delete",
-                  "actions": [
-                    { "delete": {} }
-                  ],
-                  "transitions": []
-                }
-              ]
+      cat <<'EOF' >/tmp/ilm-policy.json
+{ "policy": {
+    "description": "${policy.name}",
+    "default_state": "hot",
+    "states": [
+      {
+        "name": "hot",
+        "actions": [],
+        "transitions": [
+          {
+            "state_name": "delete",
+            "conditions": {
+              "min_index_age": "${policy.delete_min_age}"
             }
           }
-JSON
-      ); then
+        ]
+      },
+      {
+        "name": "delete",
+        "actions": [
+          { "delete": {} }
+        ],
+        "transitions": []
+      }
+    ]
+  }
+}
+EOF
+      if ! RESPONSE=$("$${CURL_BASE[@]}" \
+        -XPUT "$${ENDPOINT}/_plugins/_ism/policies/${policy.name}" \
+        -d @/tmp/ilm-policy.json); then
         echo "Failed to configure policy ${policy.name}: $${RESPONSE}" >&2
         exit 1
       fi
 
       echo "Ensuring index template ${policy.template_name}"
+      cat <<'EOF' >/tmp/ilm-template.json
+{ "index_patterns": ${jsonencode(policy.index_patterns)},
+  "priority": ${policy.template_priority},
+  "template": {
+    "settings": {
+      "index.opendistro.index_state_management.policy_id": "${policy.name}"
+    }
+  }
+}
+EOF
       if ! RESPONSE=$("$${CURL_BASE[@]}" \
         -XPUT "$${ENDPOINT}/_index_template/${policy.template_name}" \
-        -d @- <<'JSON'
-          { "index_patterns": ${jsonencode(policy.index_patterns)},
-            "priority": ${policy.template_priority},
-            "template": {
-              "settings": {
-                "index.opendistro.index_state_management.policy_id": "${policy.name}"
-              }
-            }
-          }
-JSON
-      ); then
+        -d @/tmp/ilm-template.json); then
         echo "Failed to configure template ${policy.template_name}: $${RESPONSE}" >&2
         exit 1
       fi
