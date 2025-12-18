@@ -132,33 +132,33 @@ write_files:
 %{ for policy in opensearch_cluster.index_lifecycle_policies ~}
       echo "Ensuring ILM policy ${policy.name}"
       cat <<'EOF' >/tmp/ilm-policy.json
-{ "policy": {
-    "description": "${policy.name}",
-    "default_state": "hot",
-    "states": [
-      {
-        "name": "hot",
-        "actions": [],
-        "transitions": [
-          {
-            "state_name": "delete",
-            "conditions": {
-              "min_index_age": "${policy.delete_min_age}"
+      { "policy": {
+          "description": "${policy.name}",
+          "default_state": "hot",
+          "states": [
+            {
+              "name": "hot",
+              "actions": [],
+              "transitions": [
+                {
+                  "state_name": "delete",
+                  "conditions": {
+                    "min_index_age": "${policy.delete_min_age}"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "delete",
+              "actions": [
+                { "delete": {} }
+              ],
+              "transitions": []
             }
-          }
-        ]
-      },
-      {
-        "name": "delete",
-        "actions": [
-          { "delete": {} }
-        ],
-        "transitions": []
+          ]
+        }
       }
-    ]
-  }
-}
-EOF
+      EOF
       if ! RESPONSE=$("$${CURL_BASE[@]}" \
         -XPUT "$${ENDPOINT}/_plugins/_ism/policies/${policy.name}" \
         -d @/tmp/ilm-policy.json); then
@@ -168,15 +168,15 @@ EOF
 
       echo "Ensuring index template ${policy.template_name}"
       cat <<'EOF' >/tmp/ilm-template.json
-{ "index_patterns": ${jsonencode(policy.index_patterns)},
-  "priority": ${policy.template_priority},
-  "template": {
-    "settings": {
-      "index.opendistro.index_state_management.policy_id": "${policy.name}"
-    }
-  }
-}
-EOF
+      { "index_patterns": ${jsonencode(policy.index_patterns)},
+        "priority": ${policy.template_priority},
+        "template": {
+          "settings": {
+            "index.opendistro.index_state_management.policy_id": "${policy.name}"
+          }
+        }
+      }
+      EOF
       if ! RESPONSE=$("$${CURL_BASE[@]}" \
         -XPUT "$${ENDPOINT}/_index_template/${policy.template_name}" \
         -d @/tmp/ilm-template.json); then
