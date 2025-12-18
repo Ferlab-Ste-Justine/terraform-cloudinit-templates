@@ -456,3 +456,6 @@ runcmd:
   - systemctl enable opensearch.service
   - systemctl start opensearch.service
   - /usr/local/bin/bootstrap_opensearch
+%{ if length(try(opensearch_cluster.index_lifecycle_policies, [])) > 0 ~}
+  - /usr/local/bin/configure_opensearch_ilm
+%{ endif ~}
