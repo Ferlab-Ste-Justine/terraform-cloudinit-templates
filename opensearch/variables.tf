@@ -54,13 +54,6 @@ variable "opensearch_cluster" {
       index = ""
     })
 
-    index_lifecycle_policies = optional(list(object({
-      name              = string
-      delete_min_age    = string
-      index_patterns    = list(string)
-      template_name     = string
-      template_priority = number
-    })), [])
   })
   sensitive = true
 }
@@ -88,7 +81,7 @@ variable "snapshot_repository" {
   type = object({
     access_key = optional(string, "")
     secret_key = optional(string, "")
-    ca_cert    = optional(string, "")
+    ca_certs   = optional(list(string), [])
   })
   default = {}
   sensitive = true

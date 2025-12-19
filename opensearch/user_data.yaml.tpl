@@ -39,12 +39,16 @@ write_files:
     permissions: "0400"
     content: |
       ${indent(6, tls.admin_key)}
-%{ if try(snapshot_repository.ca_cert, "") != "" ~}
-  - path: /etc/opensearch/snapshot-repository/ca.crt
+%{ if length(try(snapshot_repository.ca_certs, [])) > 0 ~}
+%{ for idx, cert in snapshot_repository.ca_certs ~}
+  - path: /etc/opensearch/snapshot-repository/ca-${idx}.crt
     owner: root:root
     permissions: "0400"
     content: |
-      ${indent(6, snapshot_repository.ca_cert)}
+      ${indent(6, cert)}
+%{ endfor ~}
+%{ endif ~}
+%{ if length(try(snapshot_repository.ca_certs, [])) > 0 ~}
   - path: /usr/local/bin/import_snapshot_repository_ca
     owner: root:root
     permissions: "0555"
@@ -52,42 +56,29 @@ write_files:
       #!/bin/bash
       set -euo pipefail
 
-      CA_FILE=/etc/opensearch/snapshot-repository/ca.crt
+      CA_DIR=/etc/opensearch/snapshot-repository
       CACERTS="/opt/opensearch/jdk/lib/security/cacerts"
       OS_KEYSTORE="/etc/opensearch/configuration/opensearch.keystore"
 
-      if [ ! -s "$CA_FILE" ]; then
-        exit 0
-      fi
-
-      TMP_PREFIX="/tmp/snapshot-repo-ca"
-      rm -f $${TMP_PREFIX}-*.pem || true
-      awk -v prefix="$TMP_PREFIX" 'BEGIN{i=0} /BEGIN CERTIFICATE/{i++} {print > (prefix "-" i ".pem")}' "$CA_FILE"
-
       shopt -s nullglob
-      imported=0
-      for cert in $${TMP_PREFIX}-*.pem; do
+      for cert in "$CA_DIR"/ca-*.crt; do
         if openssl x509 -in "$cert" -noout -text | grep -q "CA:TRUE"; then
-          alias="snapshot-repository-$(basename "$cert" .pem)"
+          alias="snapshot-repository-$(basename "$cert" .crt)"
           if ! /opt/opensearch/jdk/bin/keytool -list -alias "$alias" -keystore "$CACERTS" -storepass changeit >/dev/null 2>&1; then
             /opt/opensearch/jdk/bin/keytool -importcert -noprompt \
               -alias "$alias" \
               -file "$cert" \
               -keystore "$CACERTS" \
               -storepass changeit
-            imported=1
           fi
         fi
+        rm -f "$cert"
       done
       shopt -u nullglob
-      rm -f $${TMP_PREFIX}-*.pem || true
 
       chown opensearch:opensearch "$OS_KEYSTORE"
       chmod 600 "$OS_KEYSTORE"
 
-      if [ "$imported" -eq 1 ]; then
-        systemctl restart opensearch
-      fi
 %{ endif ~}
 %{ if length(try(opensearch_cluster.audit.external.http_endpoints, [])) > 0 ~}
 %{ if try(opensearch_cluster.audit.external.auth.ca_cert, "") != "" ~}
@@ -111,81 +102,6 @@ write_files:
     content: |
       ${indent(6, opensearch_cluster.audit.external.auth.client_key)}
 %{ endif ~}
-%{ endif ~}
-%{ if length(try(opensearch_cluster.index_lifecycle_policies, [])) > 0 ~}
-  - path: /usr/local/bin/configure_opensearch_ilm
-    owner: root:root
-    permissions: "0555"
-    content: |
-      #!/bin/bash
-      set -euo pipefail
-
-      ENDPOINT="https://${opensearch_host.bind_ip}:9200"
-      CURL_BASE=(
-        curl --silent --show-error --fail
-        --cacert /etc/opensearch/ca-certs/ca.crt
-        --cert /etc/opensearch/client-certs/admin.crt
-        --key /etc/opensearch/client-certs/admin.key
-        -H 'Content-Type: application/json'
-      )
-
-%{ for policy in opensearch_cluster.index_lifecycle_policies ~}
-      echo "Ensuring ILM policy ${policy.name}"
-      cat <<'EOF' >/tmp/ilm-policy.json
-      { "policy": {
-          "description": "${policy.name}",
-          "default_state": "hot",
-          "states": [
-            {
-              "name": "hot",
-              "actions": [],
-              "transitions": [
-                {
-                  "state_name": "delete",
-                  "conditions": {
-                    "min_index_age": "${policy.delete_min_age}"
-                  }
-                }
-              ]
-            },
-            {
-              "name": "delete",
-              "actions": [
-                { "delete": {} }
-              ],
-              "transitions": []
-            }
-          ]
-        }
-      }
-      EOF
-      if ! RESPONSE=$("$${CURL_BASE[@]}" \
-        -XPUT "$${ENDPOINT}/_plugins/_ism/policies/${policy.name}" \
-        -d @/tmp/ilm-policy.json); then
-        echo "Failed to configure policy ${policy.name}: $${RESPONSE}" >&2
-        exit 1
-      fi
-
-      echo "Ensuring index template ${policy.template_name}"
-      cat <<'EOF' >/tmp/ilm-template.json
-      { "index_patterns": ${jsonencode(policy.index_patterns)},
-        "priority": ${policy.template_priority},
-        "template": {
-          "settings": {
-            "index.opendistro.index_state_management.policy_id": "${policy.name}"
-          }
-        }
-      }
-      EOF
-      if ! RESPONSE=$("$${CURL_BASE[@]}" \
-        -XPUT "$${ENDPOINT}/_index_template/${policy.template_name}" \
-        -d @/tmp/ilm-template.json); then
-        echo "Failed to configure template ${policy.template_name}: $${RESPONSE}" >&2
-        exit 1
-      fi
-
-%{ endfor ~}
-      echo "Configured ${length(opensearch_cluster.index_lifecycle_policies)} ILM policies"
 %{ endif ~}
   - path: /usr/local/bin/bootstrap_opensearch
     owner: root:root
@@ -450,12 +366,9 @@ runcmd:
       ${snapshot_repository.secret_key}
       EOF
 %{ endif ~}
-%{ if try(snapshot_repository.ca_cert, "") != "" ~}
+%{ if length(try(snapshot_repository.ca_certs, [])) > 0 ~}
   - /usr/local/bin/import_snapshot_repository_ca
 %{ endif ~}
   - systemctl enable opensearch.service
   - systemctl start opensearch.service
   - /usr/local/bin/bootstrap_opensearch
-%{ if length(try(opensearch_cluster.index_lifecycle_policies, [])) > 0 ~}
-  - /usr/local/bin/configure_opensearch_ilm
-%{ endif ~}
