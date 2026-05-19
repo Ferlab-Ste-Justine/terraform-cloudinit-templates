@@ -5,13 +5,6 @@ merge_how:
  - name: dict
    settings: [no_replace, recurse_list]
 
-%{ if install_dependencies ~}
-users:
-  - name: nfs-tunnel
-    system: true
-    lock_passwd: true
-%{ endif ~}
-
 write_files:
   #Tls Certs
   - path: /etc/nfs-tunnel/certs/client.crt
@@ -71,9 +64,19 @@ write_files:
       WantedBy=multi-user.target
 
 %{ if install_dependencies ~}
+users:
+  - name: nfs-tunnel
+    system: true
+    lock_passwd: true
+
 packages:
   - nfs-common
   - iptables-persistent
+
+power_state:
+  delay: now
+  mode: reboot
+  message: Rebooting after cloud-init completion
 %{ endif ~}
 
 runcmd:
