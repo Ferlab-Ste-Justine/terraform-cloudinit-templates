@@ -40,6 +40,7 @@ output "configuration" {
       install_dependencies           = var.install_dependencies
       dynamic_config                 = var.dynamic_config
       fluentbit                      = var.fluentbit
+      fluentbit_version              = var.fluentbit_version
       fb_service_conf                = local.fb_service_conf
       fb_inputs_conf                 = local.fb_inputs_conf
       fb_default_variables_conf      = local.fb_default_variables_conf

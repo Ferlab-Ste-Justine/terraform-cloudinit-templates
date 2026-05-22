@@ -30,6 +30,12 @@ variable "fluentbit" {
   })
 }
 
+variable "fluentbit_version" {
+  description = "Version of fluent-bit to install (empty = latest; default is known to work with the config)"
+  type        = string
+  default     = "4.1.1"
+}
+
 variable "dynamic_config" {
   description = "Settings for dynamic configuration"
   type = object({

@@ -115,7 +115,11 @@ runcmd:
   - curl https://packages.fluentbit.io/fluentbit.key | gpg --dearmor > /usr/share/keyrings/fluentbit-keyring.gpg
   - echo "deb [signed-by=/usr/share/keyrings/fluentbit-keyring.gpg] https://packages.fluentbit.io/$(lsb_release --id --short | tr '[:upper:]' '[:lower:]')/$(lsb_release --codename --short) $(lsb_release --codename --short) main" >> /etc/apt/sources.list 
   - apt-get update
+%{ if fluentbit_version != "" ~}
+  - apt-get install -y fluent-bit=${fluentbit_version}
+%{ else ~}
   - apt-get install -y fluent-bit
+%{ endif ~}
 %{ endif ~}
   - mkdir -p /var/lib/fluent-bit/systemd-services-db
   - chmod 700 /var/lib/fluent-bit/systemd-services-db
