@@ -45,10 +45,11 @@ variable "fe_config" {
       fe_leader_fqdn = string
     })
     ssl = object({
-      enabled           = bool
-      cert              = string
-      key               = string
-      keystore_password = string
+      enabled                = bool
+      cert                   = string
+      key                    = string
+      keystore_password      = string
+      force_secure_transport = optional(bool, false)
     })
     iceberg_rest = object({
       ca_cert  = string
