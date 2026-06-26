@@ -63,3 +63,9 @@ variable "be_storage_root_path" {
   description = "Starrocks be storage root path"
   type        = string
 }
+
+variable "download_base_url" {
+  description = "Base URL the node downloads the StarRocks tarball from (<download_base_url>/StarRocks-<release_version>-ubuntu-amd64.tar.gz). An https:// URL is fetched with wget; an s3:// URL is fetched with 'aws s3 cp' (requires the AWS CLI and credentials on the node), which lets nodes pull from a private S3 bucket without an HTTP proxy. Defaults to the public StarRocks releases server."
+  type        = string
+  default     = "https://releases.starrocks.io/starrocks"
+}

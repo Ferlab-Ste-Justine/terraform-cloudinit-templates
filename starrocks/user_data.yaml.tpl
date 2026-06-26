@@ -146,7 +146,11 @@ runcmd:
 
   #Preparation: Deployment files
   - cd /opt
-  - wget -T 30 -t 10 -c https://releases.starrocks.io/starrocks/StarRocks-${release_version}-ubuntu-amd64.tar.gz
+%{ if startswith(download_base_url, "s3://") ~}
+  - aws s3 cp ${download_base_url}/StarRocks-${release_version}-ubuntu-amd64.tar.gz StarRocks-${release_version}-ubuntu-amd64.tar.gz
+%{ else ~}
+  - wget -T 30 -t 10 -c ${download_base_url}/StarRocks-${release_version}-ubuntu-amd64.tar.gz
+%{ endif ~}
   - tar xzf StarRocks-${release_version}-ubuntu-amd64.tar.gz StarRocks-${release_version}-ubuntu-amd64/${node_type} StarRocks-${release_version}-ubuntu-amd64/LICENSE.txt StarRocks-${release_version}-ubuntu-amd64/NOTICE.txt
   - mv StarRocks-${release_version}-ubuntu-amd64 starrocks
   - rm StarRocks-${release_version}-ubuntu-amd64.tar.gz
