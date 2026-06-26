@@ -156,6 +156,23 @@ runcmd:
   - mkdir -p ${fe_config.meta_dir}
   - chown starrocks:starrocks ${fe_config.meta_dir}
   - echo 'meta_dir = ${fe_config.meta_dir}' >> starrocks/fe/conf/fe.conf
+%{ if fe_config.shared_data.enabled ~}
+  - echo 'run_mode = shared_data' >> starrocks/fe/conf/fe.conf
+  - echo 'enable_load_volume_from_conf = true' >> starrocks/fe/conf/fe.conf
+  - echo 'cloud_native_storage_type = ${fe_config.shared_data.storage_type}' >> starrocks/fe/conf/fe.conf
+  - echo 'aws_s3_endpoint = ${fe_config.shared_data.s3_endpoint}' >> starrocks/fe/conf/fe.conf
+  - echo 'aws_s3_path = ${fe_config.shared_data.s3_path}' >> starrocks/fe/conf/fe.conf
+%{ if fe_config.shared_data.s3_region != "" ~}
+  - echo 'aws_s3_region = ${fe_config.shared_data.s3_region}' >> starrocks/fe/conf/fe.conf
+%{ endif ~}
+%{ if fe_config.shared_data.use_instance_profile ~}
+  - echo 'aws_s3_use_instance_profile = true' >> starrocks/fe/conf/fe.conf
+  - echo 'aws_s3_use_aws_sdk_default_behavior = true' >> starrocks/fe/conf/fe.conf
+%{ else ~}
+  - echo 'aws_s3_access_key = ${fe_config.shared_data.access_key}' >> starrocks/fe/conf/fe.conf
+  - echo 'aws_s3_secret_key = ${fe_config.shared_data.secret_key}' >> starrocks/fe/conf/fe.conf
+%{ endif ~}
+%{ endif ~}
 %{ if fe_config.ssl.enabled ~}
   - openssl pkcs12 -export -in ssl/starrocks.crt -inkey ssl/starrocks.key -out ssl/starrocks.p12 -passout pass:${fe_config.ssl.keystore_password}
   - chown -R starrocks:starrocks ssl

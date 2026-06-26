@@ -56,6 +56,16 @@ variable "fe_config" {
       env_name = string
     })
     meta_dir = string
+    shared_data = optional(object({
+      enabled              = optional(bool, false)
+      storage_type         = optional(string, "S3")
+      s3_endpoint          = optional(string, "")
+      s3_path              = optional(string, "")
+      s3_region            = optional(string, "")
+      use_instance_profile = optional(bool, false)
+      access_key           = optional(string, "")
+      secret_key           = optional(string, "")
+    }), {})
   })
   sensitive = true
 }
