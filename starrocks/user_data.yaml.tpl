@@ -162,6 +162,7 @@ runcmd:
   - echo 'ssl_keystore_location = /opt/ssl/starrocks.p12' >> starrocks/fe/conf/fe.conf
   - echo 'ssl_keystore_password = ${fe_config.ssl.keystore_password}' >> starrocks/fe/conf/fe.conf
   - echo 'ssl_key_password = ${fe_config.ssl.keystore_password}' >> starrocks/fe/conf/fe.conf
+  - echo 'ssl_force_secure_transport = ${fe_config.ssl.force_secure_transport}' >> starrocks/fe/conf/fe.conf
 %{ endif ~}
 %{ if fe_config.iceberg_rest.ca_cert != "" ~}
   - keytool -import -noprompt -keystore /usr/lib/jvm/java-1.11.0-openjdk-amd64/lib/security/cacerts -file /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt -storepass changeit -alias ic-${fe_config.iceberg_rest.env_name}
