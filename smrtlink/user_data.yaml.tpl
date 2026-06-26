@@ -107,17 +107,21 @@ packages:
 %{ endif ~}
 
 runcmd:
+  - cd /opt
+
   #Preparation: Environment variables
   - echo '. /opt/smrtlink.env' >> /etc/profile
 
   #Preparation: ulimit configurations
   - echo '${user} soft nofile 8192' >> /etc/security/limits.conf
 
-  #Preparation: Deployment files
-  - cd /opt
-  - wget https://downloads.pacbcloud.com/public/software/installers/smrtlink-release_${release_version}.zip
-  - unzip -j smrtlink-release_${release_version}.zip -d smrtlink-release
-  - rm smrtlink-release_${release_version}.zip
+  #Preparation: Installation process
+  - echo "Desired SMRT Link version is '${release_version}'."
+  - if [ -f /var/lib/smrtlink/current_version ]; then VERSION=$(cat /var/lib/smrtlink/current_version) && echo "SMRT Link version '$VERSION' was previously installed."; else VERSION=${release_version}; fi
+  - echo "Installing SMRT Link version '$VERSION'... (an upgrade will follow if needed)"
+  - wget -nv https://downloads.pacbcloud.com/public/software/installers/smrtlink-release_$VERSION.zip
+  - unzip -j smrtlink-release_$VERSION.zip -d smrtlink-release
+  - rm smrtlink-release_$VERSION.zip
   - mkdir pacbio
   - chown ${user}:${user} pacbio
 %{ if domain_name != "" ~}
@@ -129,8 +133,19 @@ runcmd:
   - SMTP_ARGS="$SMTP_ARGS --mail-user ${smtp.user} --mail-password ${smtp.password}"
 %{ endif ~}
 %{ endif ~}
-  - sudo -u ${user} ./$(ls smrtlink-release/*.run) --batch --lite ${install_lite} --jmstype NONE --rootdir /opt/pacbio/smrtlink --dbdatadir /var/lib/smrtlink/userdata/db_datadir --jobsroot /var/lib/smrtlink/userdata/jobs_root --nworkers ${workers_count} --enable-update false $DOMAIN_ARG $SMTP_ARGS
+  - sudo -u ${user} ./$(ls smrtlink-release/*.run) --batch --lite ${install_lite} --jmstype NONE --rootdir /opt/pacbio/smrtlink --dbdatadir /var/lib/smrtlink/userdata/db_datadir --jobsroot /var/lib/smrtlink/userdata/jobs_root --nworkers ${workers_count} --enable-update false $DOMAIN_ARG $SMTP_ARGS && echo $VERSION > /var/lib/smrtlink/current_version
   - rm -r smrtlink-release
+
+  #Preparation: Upgrade process
+  - |
+    if [ "$VERSION" != "${release_version}" ]; then
+      echo "Upgrading SMRT Link to version '${release_version}'..."
+      wget -nv https://downloads.pacbcloud.com/public/software/installers/smrtlink-release_${release_version}.zip
+      unzip -j smrtlink-release_${release_version}.zip -d smrtlink-release
+      rm smrtlink-release_${release_version}.zip
+      sudo -u ${user} ./$(ls smrtlink-release/*.run) --batch --upgrade --rootdir /opt/pacbio/smrtlink && echo ${release_version} > /var/lib/smrtlink/current_version
+      rm -r smrtlink-release
+    fi
 
   #Preparation: Uploads folder symlink
   - mkdir -p /var/lib/smrtlink/userdata/uploads
