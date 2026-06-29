@@ -151,6 +151,27 @@ runcmd:
   - mv StarRocks-${release_version}-ubuntu-amd64 starrocks
   - rm StarRocks-${release_version}-ubuntu-amd64.tar.gz
 
+%{ if data_volume.enabled ~}
+  #Preparation: Dedicated data volume (idempotent — an existing LUKS header or filesystem is NEVER reformatted, so reattaching a volume keeps its data)
+  - |
+    set -e
+    SR_DEV="${data_volume.device}"
+    if [ "${data_volume.luks.enabled}" = "true" ]; then
+      printf '%s' '${data_volume.luks.passphrase}' > /etc/starrocks-data.key
+      chmod 0400 /etc/starrocks-data.key
+      cryptsetup isLuks "$SR_DEV" || cryptsetup luksFormat --batch-mode "$SR_DEV" /etc/starrocks-data.key
+      [ -e /dev/mapper/starrocks-data ] || cryptsetup luksOpen --key-file /etc/starrocks-data.key "$SR_DEV" starrocks-data
+      grep -q '^starrocks-data ' /etc/crypttab || echo "starrocks-data $SR_DEV /etc/starrocks-data.key luks" >> /etc/crypttab
+      SR_DEV=/dev/mapper/starrocks-data
+    fi
+    blkid "$SR_DEV" >/dev/null 2>&1 || mkfs.ext4 -q "$SR_DEV"
+    SR_UUID="$(blkid -s UUID -o value "$SR_DEV")"
+    mkdir -p ${data_volume.mount_path}
+    grep -q " ${data_volume.mount_path} " /etc/fstab || echo "UUID=$SR_UUID ${data_volume.mount_path} ext4 defaults,nofail 0 2" >> /etc/fstab
+    mountpoint -q ${data_volume.mount_path} || mount ${data_volume.mount_path}
+    chown starrocks:starrocks ${data_volume.mount_path}
+%{ endif ~}
+
   #Configuration
 %{ if node_type == "fe" ~}
   - mkdir -p ${fe_config.meta_dir}

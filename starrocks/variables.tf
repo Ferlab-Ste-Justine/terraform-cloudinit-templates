@@ -10,7 +10,7 @@ variable "timezone" {
 
 variable "hosts_file_patch" {
   description = "Patch to add FQDN for the node IP in /etc/hosts"
-  type        = object({
+  type = object({
     enabled = bool
     fqdn    = string
   })
@@ -28,13 +28,13 @@ variable "node_type" {
 
 variable "fe_config" {
   description = "Starrocks fe configuration"
-  type        = object({
+  type = object({
     initial_leader = object({
       enabled           = bool
       fe_follower_fqdns = list(string)
       be_fqdns          = list(string)
       root_password     = string
-      users             = list(object({
+      users = list(object({
         name         = string
         password     = string
         default_role = string
@@ -73,4 +73,23 @@ variable "fe_config" {
 variable "be_storage_root_path" {
   description = "Starrocks be storage root path"
   type        = string
+}
+
+variable "data_volume" {
+  description = "Optional dedicated data volume for StarRocks data — point meta_dir / be_storage_root_path inside mount_path so it survives OS-disk reprovisioning. Optionally LUKS-encrypted, formatted ext4 only if empty, mounted via fstab/crypttab. Idempotent: an existing LUKS header or filesystem is never reformatted."
+  type = object({
+    enabled    = bool
+    device     = string
+    mount_path = string
+    luks = optional(object({
+      enabled    = bool
+      passphrase = string
+    }), { enabled = false, passphrase = "" })
+  })
+  default = {
+    enabled    = false
+    device     = ""
+    mount_path = ""
+  }
+  sensitive = true
 }
