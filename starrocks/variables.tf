@@ -63,3 +63,22 @@ variable "be_storage_root_path" {
   description = "Starrocks be storage root path"
   type        = string
 }
+
+variable "data_volume" {
+  description = "Optional dedicated data volume for the StarRocks data directory (the FE meta_dir / BE be_storage_root_path must point inside mount_path), so the data survives reprovisioning the node's OS disk. When enabled, the device is optionally LUKS-encrypted, formatted ext4 ONLY if empty, and mounted at mount_path with fstab/crypttab for reboot persistence. The setup is idempotent: an existing LUKS header or filesystem is never reformatted (reattaching a volume keeps its data)."
+  type = object({
+    enabled    = bool
+    device     = string
+    mount_path = string
+    luks = optional(object({
+      enabled    = bool
+      passphrase = string
+    }), { enabled = false, passphrase = "" })
+  })
+  default = {
+    enabled    = false
+    device     = ""
+    mount_path = ""
+  }
+  sensitive = true
+}
