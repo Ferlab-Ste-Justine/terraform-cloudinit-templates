@@ -1,7 +1,7 @@
 output "configuration" {
   description = "Cloudinit compatible starrocks configurations"
-  value       = templatefile(
-    "${path.module}/user_data.yaml.tpl", 
+  value = templatefile(
+    "${path.module}/user_data.yaml.tpl",
     {
       install_dependencies = var.install_dependencies
       timezone             = var.timezone
@@ -10,6 +10,7 @@ output "configuration" {
       node_type            = var.node_type
       fe_config            = var.fe_config
       be_storage_root_path = var.be_storage_root_path
+      data_volume          = var.data_volume
     }
   )
 }
