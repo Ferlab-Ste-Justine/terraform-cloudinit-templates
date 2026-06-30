@@ -18,8 +18,8 @@ write_files:
     owner: root:root
     permissions: "0555"
     content: |
-      JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-      PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/usr/lib/jvm/java-11-openjdk-amd64/bin
+      JAVA_HOME=${install.java_home}
+      PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:${install.java_home}/bin
       LANG=en_US.UTF8
 %{ if fe_config.ssl.enabled ~}
   - path: /opt/ssl/starrocks.crt
@@ -93,10 +93,11 @@ write_files:
 
 %{ if install_dependencies ~}
 packages:
-  - openjdk-11-jdk
-  - sysfsutils
+%{ for package in install.packages ~}
+  - ${package}
+%{ endfor ~}
 %{ if node_type == "fe" ~}
-  - mysql-client
+  - ${install.mysql_client_package}
 %{ endif ~}
 %{ endif ~}
 
@@ -146,10 +147,10 @@ runcmd:
 
   #Preparation: Deployment files
   - cd /opt
-  - wget -T 30 -t 10 -c https://releases.starrocks.io/starrocks/StarRocks-${release_version}-ubuntu-amd64.tar.gz
-  - tar xzf StarRocks-${release_version}-ubuntu-amd64.tar.gz StarRocks-${release_version}-ubuntu-amd64/${node_type} StarRocks-${release_version}-ubuntu-amd64/LICENSE.txt StarRocks-${release_version}-ubuntu-amd64/NOTICE.txt
-  - mv StarRocks-${release_version}-ubuntu-amd64 starrocks
-  - rm StarRocks-${release_version}-ubuntu-amd64.tar.gz
+  - wget -T 30 -t 10 -c ${install.download_base_url}/StarRocks-${release_version}-${install.tarball_suffix}.tar.gz
+  - tar xzf StarRocks-${release_version}-${install.tarball_suffix}.tar.gz StarRocks-${release_version}-${install.tarball_suffix}/${node_type} StarRocks-${release_version}-${install.tarball_suffix}/LICENSE.txt StarRocks-${release_version}-${install.tarball_suffix}/NOTICE.txt
+  - mv StarRocks-${release_version}-${install.tarball_suffix} starrocks
+  - rm StarRocks-${release_version}-${install.tarball_suffix}.tar.gz
 
 %{ if data_volume.enabled ~}
   #Preparation: Dedicated data volume (idempotent — an existing LUKS header or filesystem is NEVER reformatted, so reattaching a volume keeps its data)
@@ -203,7 +204,7 @@ runcmd:
   - echo 'ssl_force_secure_transport = ${fe_config.ssl.force_secure_transport}' >> starrocks/fe/conf/fe.conf
 %{ endif ~}
 %{ if fe_config.iceberg_rest.ca_cert != "" ~}
-  - keytool -import -noprompt -keystore /usr/lib/jvm/java-1.11.0-openjdk-amd64/lib/security/cacerts -file /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt -storepass changeit -alias ic-${fe_config.iceberg_rest.env_name}
+  - keytool -import -noprompt -keystore ${install.java_home}/lib/security/cacerts -file /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt -storepass changeit -alias ic-${fe_config.iceberg_rest.env_name}
 %{ endif ~}
 %{ endif ~}
 %{ if node_type == "be" ~}

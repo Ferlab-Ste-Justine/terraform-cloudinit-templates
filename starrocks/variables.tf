@@ -21,6 +21,18 @@ variable "release_version" {
   type        = string
 }
 
+variable "install" {
+  description = "Platform-specific install parameters. Defaults target Ubuntu/amd64 (the on-prem libvirt baseline); override for other platforms (e.g. Amazon Linux 2023 / arm64). Cloud-init's packages module installs via the distro package manager (apt or dnf), so only the package names, JAVA_HOME, tarball suffix and download base url vary across platforms. tarball_suffix is the single StarRocks build token (ubuntu-amd64 / centos-amd64 / arm64) because the upstream arm64 build carries no os prefix."
+  type = object({
+    packages             = optional(list(string), ["openjdk-17-jdk", "sysfsutils"])
+    mysql_client_package = optional(string, "mysql-client")
+    java_home            = optional(string, "/usr/lib/jvm/java-17-openjdk-amd64")
+    tarball_suffix       = optional(string, "ubuntu-amd64")
+    download_base_url    = optional(string, "https://releases.starrocks.io/starrocks")
+  })
+  default = {}
+}
+
 variable "node_type" {
   description = "Starrocks node type to configure, either fe or be"
   type        = string

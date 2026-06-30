@@ -7,6 +7,7 @@ output "configuration" {
       timezone             = var.timezone
       hosts_file_patch     = var.hosts_file_patch
       release_version      = var.release_version
+      install              = var.install
       node_type            = var.node_type
       fe_config            = var.fe_config
       be_storage_root_path = var.be_storage_root_path
