@@ -21,7 +21,7 @@ write_files:
       JAVA_HOME=${install.java_home}
       PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:${install.java_home}/bin
       LANG=en_US.UTF8
-%{ if fe_config.ssl.enabled ~}
+%{ if fe_config.ssl.enabled && secrets_manager.ssl_secret == "" ~}
   - path: /opt/ssl/starrocks.crt
     owner: root:root
     permissions: "0444"
@@ -198,6 +198,23 @@ runcmd:
   - echo 'aws_s3_secret_key = ${fe_config.shared_data.secret_key}' >> starrocks/fe/conf/fe.conf
 %{ endif ~}
 %{ endif ~}
+%{ if secrets_manager.ssl_secret != "" ~}
+  - |
+    mkdir -p /opt/ssl
+    umask 077
+    SSL_JSON=$(aws secretsmanager get-secret-value --region ${secrets_manager.region} --secret-id ${secrets_manager.ssl_secret} --query SecretString --output text)
+    echo "$SSL_JSON" | jq -r .server_cert > /opt/ssl/starrocks.crt
+    echo "$SSL_JSON" | jq -r .server_key > /opt/ssl/starrocks.key
+    KEYSTORE_PW=$(echo "$SSL_JSON" | jq -r .keystore_password)
+    openssl pkcs12 -export -in /opt/ssl/starrocks.crt -inkey /opt/ssl/starrocks.key -out /opt/ssl/starrocks.p12 -passout pass:"$KEYSTORE_PW"
+    rm -f /opt/ssl/starrocks.crt /opt/ssl/starrocks.key
+    chown -R starrocks:starrocks /opt/ssl
+    echo "ssl_keystore_location = /opt/ssl/starrocks.p12" >> starrocks/fe/conf/fe.conf
+    echo "ssl_keystore_password = $KEYSTORE_PW" >> starrocks/fe/conf/fe.conf
+    echo "ssl_key_password = $KEYSTORE_PW" >> starrocks/fe/conf/fe.conf
+    echo "ssl_force_secure_transport = ${fe_config.ssl.force_secure_transport}" >> starrocks/fe/conf/fe.conf
+    unset SSL_JSON KEYSTORE_PW
+%{ else ~}
 %{ if fe_config.ssl.enabled ~}
   - openssl pkcs12 -export -in ssl/starrocks.crt -inkey ssl/starrocks.key -out ssl/starrocks.p12 -passout pass:${fe_config.ssl.keystore_password}
   - chown -R starrocks:starrocks ssl
@@ -205,6 +222,7 @@ runcmd:
   - echo 'ssl_keystore_password = ${fe_config.ssl.keystore_password}' >> starrocks/fe/conf/fe.conf
   - echo 'ssl_key_password = ${fe_config.ssl.keystore_password}' >> starrocks/fe/conf/fe.conf
   - echo 'ssl_force_secure_transport = ${fe_config.ssl.force_secure_transport}' >> starrocks/fe/conf/fe.conf
+%{ endif ~}
 %{ endif ~}
 %{ if fe_config.iceberg_rest.ca_cert != "" ~}
   - keytool -import -noprompt -keystore ${install.java_home}/lib/security/cacerts -file /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt -storepass changeit -alias ic-${fe_config.iceberg_rest.env_name}
@@ -235,15 +253,26 @@ runcmd:
 
   #Setup
 %{ if node_type == "fe" && fe_config.initial_leader.enabled ~}
-  - while ! mysqladmin -s -h127.0.0.1 -P9030 -uroot ping; do echo "mysqld is not alive, retrying in 5 seconds..."; sleep 5; done;
-  - mysql -h127.0.0.1 -P9030 -uroot -e "SET PASSWORD = PASSWORD('${fe_config.initial_leader.root_password}');"
+  - |
+%{ if secrets_manager.root_password_secret != "" ~}
+    ROOT_PW=$(aws secretsmanager get-secret-value --region ${secrets_manager.region} --secret-id ${secrets_manager.root_password_secret} --query SecretString --output text)
+%{ else ~}
+    ROOT_PW='${fe_config.initial_leader.root_password}'
+%{ endif ~}
+    while ! mysqladmin -s -h127.0.0.1 -P9030 -uroot ping; do echo "mysqld is not alive, retrying in 5 seconds..."; sleep 5; done
+    echo "SET PASSWORD = PASSWORD('$ROOT_PW');" | mysql -h127.0.0.1 -P9030 -uroot
+    export MYSQL_PWD="$ROOT_PW"
 %{ for fe_follower_fqdn in fe_config.initial_leader.fe_follower_fqdns ~}
-  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"ALTER SYSTEM ADD FOLLOWER '${fe_follower_fqdn}:9010';"
+    mysql -h127.0.0.1 -P9030 -uroot -e "ALTER SYSTEM ADD FOLLOWER '${fe_follower_fqdn}:9010';"
 %{ endfor ~}
 %{ for be_fqdn in fe_config.initial_leader.be_fqdns ~}
-  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"ALTER SYSTEM ADD BACKEND '${be_fqdn}:9050';"
+    mysql -h127.0.0.1 -P9030 -uroot -e "ALTER SYSTEM ADD BACKEND '${be_fqdn}:9050';"
+%{ endfor ~}
+%{ for cn_fqdn in fe_config.initial_leader.cn_fqdns ~}
+    mysql -h127.0.0.1 -P9030 -uroot -e "ALTER SYSTEM ADD COMPUTE NODE '${cn_fqdn}:9050';"
 %{ endfor ~}
 %{ for user in fe_config.initial_leader.users ~}
-  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"CREATE USER '${user.name}' IDENTIFIED BY '${user.password}' DEFAULT ROLE '${user.default_role}';"
+    echo "CREATE USER '${user.name}' IDENTIFIED BY '${user.password}' DEFAULT ROLE '${user.default_role}';" | mysql -h127.0.0.1 -P9030 -uroot
 %{ endfor ~}
+    unset MYSQL_PWD
 %{ endif ~}

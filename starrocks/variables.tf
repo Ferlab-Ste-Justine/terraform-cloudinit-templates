@@ -22,7 +22,7 @@ variable "release_version" {
 }
 
 variable "install" {
-  description = "Platform-specific install parameters. Defaults target Ubuntu/amd64 (the on-prem libvirt baseline); override for other platforms (e.g. Amazon Linux 2023 / arm64). Cloud-init's packages module installs via the distro package manager (apt or dnf), so only the package names, JAVA_HOME, tarball suffix and download base url vary across platforms. tarball_suffix is the single StarRocks build token (ubuntu-amd64 / centos-amd64 / arm64) because the upstream arm64 build carries no os prefix."
+  description = "Platform-specific install parameters. Defaults target Ubuntu/amd64; override for other platforms (e.g. Amazon Linux 2023 / arm64)."
   type = object({
     packages             = optional(list(string), ["openjdk-17-jdk", "sysfsutils"])
     mysql_client_package = optional(string, "mysql-client")
@@ -50,6 +50,7 @@ variable "fe_config" {
       enabled           = bool
       fe_follower_fqdns = list(string)
       be_fqdns          = list(string)
+      cn_fqdns          = optional(list(string), [])
       root_password     = string
       users = list(object({
         name         = string
@@ -87,13 +88,23 @@ variable "fe_config" {
   sensitive = true
 }
 
+variable "secrets_manager" {
+  description = "Optional AWS Secrets Manager source for fe secrets, fetched at boot instead of injected literally. Mutually exclusive with the literal fe_config secrets."
+  type = object({
+    region               = optional(string, "")
+    root_password_secret = optional(string, "")
+    ssl_secret           = optional(string, "")
+  })
+  default = {}
+}
+
 variable "be_storage_root_path" {
   description = "Starrocks be storage root path"
   type        = string
 }
 
 variable "cn_config" {
-  description = "Starrocks cn (shared-data compute node) configuration. storage_root_path holds the local datacache, not primary data (which lives in the shared S3 volume)."
+  description = "Starrocks cn (shared-data compute node) configuration"
   type = object({
     storage_root_path   = optional(string, "/opt/starrocks/storage")
     priority_networks   = optional(string, "")
