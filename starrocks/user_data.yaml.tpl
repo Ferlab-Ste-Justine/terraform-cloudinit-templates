@@ -74,6 +74,9 @@ write_files:
 %{ if node_type == "be" ~}
       ExecStart=/opt/starrocks/be/bin/start_be.sh
 %{ endif ~}
+%{ if node_type == "cn" ~}
+      ExecStart=/opt/starrocks/cn/bin/start_cn.sh
+%{ endif ~}
       ExecStop=/opt/starrocks/${node_type}/bin/stop_${node_type}.sh --graceful
       SuccessExitStatus=143
       Restart=on-failure
@@ -211,6 +214,17 @@ runcmd:
   - mkdir -p ${be_storage_root_path}
   - chown starrocks:starrocks ${be_storage_root_path}
   - echo 'storage_root_path = ${be_storage_root_path}' >> starrocks/be/conf/be.conf
+%{ endif ~}
+%{ if node_type == "cn" ~}
+  - mkdir -p ${cn_config.storage_root_path}
+  - chown starrocks:starrocks ${cn_config.storage_root_path}
+  - echo 'storage_root_path = ${cn_config.storage_root_path}' >> starrocks/cn/conf/cn.conf
+%{ if cn_config.priority_networks != "" ~}
+  - echo 'priority_networks = ${cn_config.priority_networks}' >> starrocks/cn/conf/cn.conf
+%{ endif ~}
+  - echo 'mem_limit = ${cn_config.mem_limit}' >> starrocks/cn/conf/cn.conf
+  - echo 'datacache_mem_size = ${cn_config.datacache_mem_size}' >> starrocks/cn/conf/cn.conf
+  - echo 'datacache_disk_size = ${cn_config.datacache_disk_size}' >> starrocks/cn/conf/cn.conf
 %{ endif ~}
   - chmod 0400 starrocks/${node_type}/conf/${node_type}.conf
 

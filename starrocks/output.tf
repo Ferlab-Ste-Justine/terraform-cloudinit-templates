@@ -11,6 +11,7 @@ output "configuration" {
       node_type            = var.node_type
       fe_config            = var.fe_config
       be_storage_root_path = var.be_storage_root_path
+      cn_config            = var.cn_config
       data_volume          = var.data_volume
     }
   )

@@ -34,8 +34,13 @@ variable "install" {
 }
 
 variable "node_type" {
-  description = "Starrocks node type to configure, either fe or be"
+  description = "Starrocks node type to configure: fe, be (shared-nothing) or cn (shared-data compute node)"
   type        = string
+
+  validation {
+    condition     = contains(["fe", "be", "cn"], var.node_type)
+    error_message = "node_type must be one of fe, be, cn."
+  }
 }
 
 variable "fe_config" {
@@ -85,6 +90,18 @@ variable "fe_config" {
 variable "be_storage_root_path" {
   description = "Starrocks be storage root path"
   type        = string
+}
+
+variable "cn_config" {
+  description = "Starrocks cn (shared-data compute node) configuration. storage_root_path holds the local datacache, not primary data (which lives in the shared S3 volume)."
+  type = object({
+    storage_root_path   = optional(string, "/opt/starrocks/storage")
+    priority_networks   = optional(string, "")
+    mem_limit           = optional(string, "80%")
+    datacache_mem_size  = optional(string, "40%")
+    datacache_disk_size = optional(string, "80%")
+  })
+  default = {}
 }
 
 variable "data_volume" {
