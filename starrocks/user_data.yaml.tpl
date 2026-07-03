@@ -5,7 +5,7 @@ merge_how:
  - name: dict
    settings: [no_replace, recurse_list]
 
-%{ if install_dependencies ~}
+%{ if dependencies.install ~}
 users:
   - name: starrocks
     system: true
@@ -18,8 +18,8 @@ write_files:
     owner: root:root
     permissions: "0555"
     content: |
-      JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-      PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/usr/lib/jvm/java-11-openjdk-amd64/bin
+      JAVA_HOME=${dependencies.java_home}
+      PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:${dependencies.java_home}/bin
       LANG=en_US.UTF8
 %{ if fe_config.ssl.enabled ~}
   - path: /opt/ssl/starrocks.crt
@@ -74,6 +74,9 @@ write_files:
 %{ if node_type == "be" ~}
       ExecStart=/opt/starrocks/be/bin/start_be.sh
 %{ endif ~}
+%{ if node_type == "cn" ~}
+      ExecStart=/opt/starrocks/cn/bin/start_cn.sh
+%{ endif ~}
       ExecStop=/opt/starrocks/${node_type}/bin/stop_${node_type}.sh --graceful
       SuccessExitStatus=143
       Restart=on-failure
@@ -91,12 +94,15 @@ write_files:
       [Install]
       WantedBy=multi-user.target
 
-%{ if install_dependencies ~}
+%{ if dependencies.install ~}
 packages:
-  - openjdk-11-jdk
-  - sysfsutils
+%{ for package in dependencies.packages.common ~}
+  - ${package}
+%{ endfor ~}
 %{ if node_type == "fe" ~}
-  - mysql-client
+%{ for package in dependencies.packages.frontend ~}
+  - ${package}
+%{ endfor ~}
 %{ endif ~}
 %{ endif ~}
 
@@ -146,31 +152,60 @@ runcmd:
 
   #Preparation: Deployment files
   - cd /opt
-  - wget -T 30 -t 10 -c https://releases.starrocks.io/starrocks/StarRocks-${release_version}-ubuntu-amd64.tar.gz
-  - tar xzf StarRocks-${release_version}-ubuntu-amd64.tar.gz StarRocks-${release_version}-ubuntu-amd64/${node_type} StarRocks-${release_version}-ubuntu-amd64/LICENSE.txt StarRocks-${release_version}-ubuntu-amd64/NOTICE.txt
-  - mv StarRocks-${release_version}-ubuntu-amd64 starrocks
-  - rm StarRocks-${release_version}-ubuntu-amd64.tar.gz
+  - mkdir -p starrocks
+  - wget -T 30 -t 10 -c -O starrocks.tar.gz ${dependencies.starrocks_tar_url}
+  - tar xzf starrocks.tar.gz -C starrocks --wildcards --strip-components=1 '*/${node_type}' '*/LICENSE.txt' '*/NOTICE.txt'
+  - rm starrocks.tar.gz
 
   #Configuration
 %{ if node_type == "fe" ~}
   - mkdir -p ${fe_config.meta_dir}
   - chown starrocks:starrocks ${fe_config.meta_dir}
   - echo 'meta_dir = ${fe_config.meta_dir}' >> starrocks/fe/conf/fe.conf
+%{ if fe_config.shared_data.enabled ~}
+  - echo 'run_mode = shared_data' >> starrocks/fe/conf/fe.conf
+  - echo 'enable_load_volume_from_conf = true' >> starrocks/fe/conf/fe.conf
+  - echo 'cloud_native_storage_type = ${fe_config.shared_data.storage_type}' >> starrocks/fe/conf/fe.conf
+  - echo 'aws_s3_endpoint = ${fe_config.shared_data.s3_endpoint}' >> starrocks/fe/conf/fe.conf
+  - echo 'aws_s3_path = ${fe_config.shared_data.s3_path}' >> starrocks/fe/conf/fe.conf
+%{ if fe_config.shared_data.s3_region != "" ~}
+  - echo 'aws_s3_region = ${fe_config.shared_data.s3_region}' >> starrocks/fe/conf/fe.conf
+%{ endif ~}
+%{ if fe_config.shared_data.use_instance_profile ~}
+  - echo 'aws_s3_use_instance_profile = true' >> starrocks/fe/conf/fe.conf
+  - echo 'aws_s3_use_aws_sdk_default_behavior = true' >> starrocks/fe/conf/fe.conf
+%{ else ~}
+  - echo 'aws_s3_access_key = ${fe_config.shared_data.access_key}' >> starrocks/fe/conf/fe.conf
+  - echo 'aws_s3_secret_key = ${fe_config.shared_data.secret_key}' >> starrocks/fe/conf/fe.conf
+%{ endif ~}
+%{ endif ~}
 %{ if fe_config.ssl.enabled ~}
   - openssl pkcs12 -export -in ssl/starrocks.crt -inkey ssl/starrocks.key -out ssl/starrocks.p12 -passout pass:${fe_config.ssl.keystore_password}
   - chown -R starrocks:starrocks ssl
   - echo 'ssl_keystore_location = /opt/ssl/starrocks.p12' >> starrocks/fe/conf/fe.conf
   - echo 'ssl_keystore_password = ${fe_config.ssl.keystore_password}' >> starrocks/fe/conf/fe.conf
   - echo 'ssl_key_password = ${fe_config.ssl.keystore_password}' >> starrocks/fe/conf/fe.conf
+  - echo 'ssl_force_secure_transport = ${fe_config.ssl.force_secure_transport}' >> starrocks/fe/conf/fe.conf
 %{ endif ~}
 %{ if fe_config.iceberg_rest.ca_cert != "" ~}
-  - keytool -import -noprompt -keystore /usr/lib/jvm/java-1.11.0-openjdk-amd64/lib/security/cacerts -file /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt -storepass changeit -alias ic-${fe_config.iceberg_rest.env_name}
+  - keytool -import -noprompt -keystore ${dependencies.java_home}/lib/security/cacerts -file /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt -storepass changeit -alias ic-${fe_config.iceberg_rest.env_name}
 %{ endif ~}
 %{ endif ~}
 %{ if node_type == "be" ~}
   - mkdir -p ${be_storage_root_path}
   - chown starrocks:starrocks ${be_storage_root_path}
   - echo 'storage_root_path = ${be_storage_root_path}' >> starrocks/be/conf/be.conf
+%{ endif ~}
+%{ if node_type == "cn" ~}
+  - mkdir -p ${cn_config.storage_root_path}
+  - chown starrocks:starrocks ${cn_config.storage_root_path}
+  - echo 'storage_root_path = ${cn_config.storage_root_path}' >> starrocks/cn/conf/cn.conf
+%{ if cn_config.priority_networks != "" ~}
+  - echo 'priority_networks = ${cn_config.priority_networks}' >> starrocks/cn/conf/cn.conf
+%{ endif ~}
+  - echo 'mem_limit = ${cn_config.mem_limit}' >> starrocks/cn/conf/cn.conf
+  - echo 'datacache_mem_size = ${cn_config.datacache_mem_size}' >> starrocks/cn/conf/cn.conf
+  - echo 'datacache_disk_size = ${cn_config.datacache_disk_size}' >> starrocks/cn/conf/cn.conf
 %{ endif ~}
   - chmod 0400 starrocks/${node_type}/conf/${node_type}.conf
 
@@ -181,15 +216,26 @@ runcmd:
 
   #Setup
 %{ if node_type == "fe" && fe_config.initial_leader.enabled ~}
-  - while ! mysqladmin -s -h127.0.0.1 -P9030 -uroot ping; do echo "mysqld is not alive, retrying in 5 seconds..."; sleep 5; done;
-  - mysql -h127.0.0.1 -P9030 -uroot -e "SET PASSWORD = PASSWORD('${fe_config.initial_leader.root_password}');"
+  - |
+%{ if fe_config.initial_leader.root_password.shell_source != null ~}
+    . ${fe_config.initial_leader.root_password.shell_source}
+%{ else ~}
+    ROOT_PW='${fe_config.initial_leader.root_password.literal}'
+%{ endif ~}
+    while ! mysqladmin -s -h127.0.0.1 -P9030 -uroot ping; do echo "mysqld is not alive, retrying in 5 seconds..."; sleep 5; done
+    echo "SET PASSWORD = PASSWORD('$ROOT_PW');" | mysql -h127.0.0.1 -P9030 -uroot
+    export MYSQL_PWD="$ROOT_PW"
 %{ for fe_follower_fqdn in fe_config.initial_leader.fe_follower_fqdns ~}
-  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"ALTER SYSTEM ADD FOLLOWER '${fe_follower_fqdn}:9010';"
+    mysql -h127.0.0.1 -P9030 -uroot -e "ALTER SYSTEM ADD FOLLOWER '${fe_follower_fqdn}:9010';"
 %{ endfor ~}
 %{ for be_fqdn in fe_config.initial_leader.be_fqdns ~}
-  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"ALTER SYSTEM ADD BACKEND '${be_fqdn}:9050';"
+    mysql -h127.0.0.1 -P9030 -uroot -e "ALTER SYSTEM ADD BACKEND '${be_fqdn}:9050';"
+%{ endfor ~}
+%{ for cn_fqdn in fe_config.initial_leader.cn_fqdns ~}
+    mysql -h127.0.0.1 -P9030 -uroot -e "ALTER SYSTEM ADD COMPUTE NODE '${cn_fqdn}:9050';"
 %{ endfor ~}
 %{ for user in fe_config.initial_leader.users ~}
-  - mysql -h127.0.0.1 -P9030 -uroot -p${fe_config.initial_leader.root_password} -e"CREATE USER '${user.name}' IDENTIFIED BY '${user.password}' DEFAULT ROLE '${user.default_role}';"
+    echo "CREATE USER '${user.name}' IDENTIFIED BY '${user.password}' DEFAULT ROLE '${user.default_role}';" | mysql -h127.0.0.1 -P9030 -uroot
 %{ endfor ~}
+    unset MYSQL_PWD
 %{ endif ~}
