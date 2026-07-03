@@ -4,7 +4,7 @@ output "configuration" {
     "${path.module}/user_data.yaml.tpl", 
     {
       region = var.region
-      shell_source = var.shell_source
+      shell_sources = var.shell_sources
     }
   )
 }

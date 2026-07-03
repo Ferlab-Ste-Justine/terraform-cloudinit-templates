@@ -14,3 +14,4 @@ write_files:
 %{ for secret in shell_source.secrets ~}
       ${secret.variable_name}=$(aws secretsmanager get-secret-value --region ${region} --secret-id ${secret.secret_id} --query SecretString --output text)
 %{ endfor ~}
+%{ endfor ~}
