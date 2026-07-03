@@ -5,7 +5,7 @@ merge_how:
  - name: dict
    settings: [no_replace, recurse_list]
 
-%{ if install_dependencies ~}
+%{ if dependencies.install ~}
 users:
   - name: starrocks
     system: true
@@ -18,8 +18,8 @@ write_files:
     owner: root:root
     permissions: "0555"
     content: |
-      JAVA_HOME=${install.java_home}
-      PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:${install.java_home}/bin
+      JAVA_HOME=${dependencies.java_home}
+      PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:${dependencies.java_home}/bin
       LANG=en_US.UTF8
 %{ if fe_config.ssl.enabled && secrets_manager.ssl_secret == "" ~}
   - path: /opt/ssl/starrocks.crt
@@ -94,13 +94,15 @@ write_files:
       [Install]
       WantedBy=multi-user.target
 
-%{ if install_dependencies ~}
+%{ if dependencies.install ~}
 packages:
-%{ for package in install.packages ~}
+%{ for package in dependencies.packages.common ~}
   - ${package}
 %{ endfor ~}
 %{ if node_type == "fe" ~}
-  - ${install.mysql_client_package}
+%{ for package in dependencies.packages.frontend ~}
+  - ${package}
+%{ endfor ~}
 %{ endif ~}
 %{ endif ~}
 
@@ -150,31 +152,10 @@ runcmd:
 
   #Preparation: Deployment files
   - cd /opt
-  - wget -T 30 -t 10 -c ${install.download_base_url}/StarRocks-${release_version}-${install.tarball_suffix}.tar.gz
-  - tar xzf StarRocks-${release_version}-${install.tarball_suffix}.tar.gz StarRocks-${release_version}-${install.tarball_suffix}/${node_type} StarRocks-${release_version}-${install.tarball_suffix}/LICENSE.txt StarRocks-${release_version}-${install.tarball_suffix}/NOTICE.txt
-  - mv StarRocks-${release_version}-${install.tarball_suffix} starrocks
-  - rm StarRocks-${release_version}-${install.tarball_suffix}.tar.gz
-
-%{ if data_volume.enabled ~}
-  #Preparation: Dedicated data volume (idempotent — an existing LUKS header or filesystem is NEVER reformatted, so reattaching a volume keeps its data)
-  - |
-    set -e
-    SR_DEV="${data_volume.device}"
-    if [ "${data_volume.luks.enabled}" = "true" ]; then
-      printf '%s' '${data_volume.luks.passphrase}' > /etc/starrocks-data.key
-      chmod 0400 /etc/starrocks-data.key
-      cryptsetup isLuks "$SR_DEV" || cryptsetup luksFormat --batch-mode "$SR_DEV" /etc/starrocks-data.key
-      [ -e /dev/mapper/starrocks-data ] || cryptsetup luksOpen --key-file /etc/starrocks-data.key "$SR_DEV" starrocks-data
-      grep -q '^starrocks-data ' /etc/crypttab || echo "starrocks-data $SR_DEV /etc/starrocks-data.key luks" >> /etc/crypttab
-      SR_DEV=/dev/mapper/starrocks-data
-    fi
-    blkid "$SR_DEV" >/dev/null 2>&1 || mkfs.ext4 -q "$SR_DEV"
-    SR_UUID="$(blkid -s UUID -o value "$SR_DEV")"
-    mkdir -p ${data_volume.mount_path}
-    grep -q " ${data_volume.mount_path} " /etc/fstab || echo "UUID=$SR_UUID ${data_volume.mount_path} ext4 defaults,nofail 0 2" >> /etc/fstab
-    mountpoint -q ${data_volume.mount_path} || mount ${data_volume.mount_path}
-    chown starrocks:starrocks ${data_volume.mount_path}
-%{ endif ~}
+  - mkdir -p starrocks
+  - wget -T 30 -t 10 -c -O starrocks.tar.gz ${dependencies.starrocks_tar_url}
+  - tar xzf starrocks.tar.gz -C starrocks --wildcards --strip-components=1 '*/${node_type}' '*/LICENSE.txt' '*/NOTICE.txt'
+  - rm starrocks.tar.gz
 
   #Configuration
 %{ if node_type == "fe" ~}
@@ -225,7 +206,7 @@ runcmd:
 %{ endif ~}
 %{ endif ~}
 %{ if fe_config.iceberg_rest.ca_cert != "" ~}
-  - keytool -import -noprompt -keystore ${install.java_home}/lib/security/cacerts -file /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt -storepass changeit -alias ic-${fe_config.iceberg_rest.env_name}
+  - keytool -import -noprompt -keystore ${dependencies.java_home}/lib/security/cacerts -file /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt -storepass changeit -alias ic-${fe_config.iceberg_rest.env_name}
 %{ endif ~}
 %{ endif ~}
 %{ if node_type == "be" ~}

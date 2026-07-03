@@ -1,6 +1,15 @@
-variable "install_dependencies" {
-  description = "Whether to install all dependencies in cloud-init"
-  type        = bool
+variable "dependencies" {
+  description = "Dependency installation and StarRocks artifact source"
+  type = object({
+    install = optional(bool, true)
+    packages = optional(object({
+      common   = optional(list(string), ["openjdk-17-jdk", "sysfsutils"])
+      frontend = optional(list(string), ["mysql-client"])
+    }), {})
+    java_home         = optional(string, "/usr/lib/jvm/java-17-openjdk-amd64")
+    starrocks_tar_url = optional(string, "https://releases.starrocks.io/starrocks/StarRocks-3.5.19-ubuntu-amd64.tar.gz")
+  })
+  default = {}
 }
 
 variable "timezone" {
@@ -14,23 +23,6 @@ variable "hosts_file_patch" {
     enabled = bool
     fqdn    = string
   })
-}
-
-variable "release_version" {
-  description = "Starrocks release version to install"
-  type        = string
-}
-
-variable "install" {
-  description = "Platform-specific install parameters. Defaults target Ubuntu/amd64; override for other platforms (e.g. Amazon Linux 2023 / arm64)."
-  type = object({
-    packages             = optional(list(string), ["openjdk-17-jdk", "sysfsutils"])
-    mysql_client_package = optional(string, "mysql-client")
-    java_home            = optional(string, "/usr/lib/jvm/java-17-openjdk-amd64")
-    tarball_suffix       = optional(string, "ubuntu-amd64")
-    download_base_url    = optional(string, "https://releases.starrocks.io/starrocks")
-  })
-  default = {}
 }
 
 variable "node_type" {
@@ -115,21 +107,3 @@ variable "cn_config" {
   default = {}
 }
 
-variable "data_volume" {
-  description = "Optional dedicated data volume for StarRocks data — point meta_dir / be_storage_root_path inside mount_path so it survives OS-disk reprovisioning. Optionally LUKS-encrypted, formatted ext4 only if empty, mounted via fstab/crypttab. Idempotent: an existing LUKS header or filesystem is never reformatted."
-  type = object({
-    enabled    = bool
-    device     = string
-    mount_path = string
-    luks = optional(object({
-      enabled    = bool
-      passphrase = string
-    }), { enabled = false, passphrase = "" })
-  })
-  default = {
-    enabled    = false
-    device     = ""
-    mount_path = ""
-  }
-  sensitive = true
-}
