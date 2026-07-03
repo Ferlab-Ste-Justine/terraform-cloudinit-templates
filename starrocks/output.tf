@@ -10,7 +10,6 @@ output "configuration" {
       fe_config            = var.fe_config
       be_storage_root_path = var.be_storage_root_path
       cn_config            = var.cn_config
-      secrets_manager      = var.secrets_manager
     }
   )
 }

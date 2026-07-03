@@ -43,7 +43,10 @@ variable "fe_config" {
       fe_follower_fqdns = list(string)
       be_fqdns          = list(string)
       cn_fqdns          = optional(list(string), [])
-      root_password     = string
+      root_password = object({
+        literal      = optional(string)
+        shell_source = optional(string)
+      })
       users = list(object({
         name         = string
         password     = string
@@ -78,16 +81,6 @@ variable "fe_config" {
     }), {})
   })
   sensitive = true
-}
-
-variable "secrets_manager" {
-  description = "Optional AWS Secrets Manager source for fe secrets, fetched at boot instead of injected literally. Mutually exclusive with the literal fe_config secrets."
-  type = object({
-    region               = optional(string, "")
-    root_password_secret = optional(string, "")
-    ssl_secret           = optional(string, "")
-  })
-  default = {}
 }
 
 variable "be_storage_root_path" {
