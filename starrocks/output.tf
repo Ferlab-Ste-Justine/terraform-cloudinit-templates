@@ -7,6 +7,7 @@ output "configuration" {
       timezone             = var.timezone
       hosts_file_patch     = var.hosts_file_patch
       node_type            = var.node_type
+      install_dir          = var.node_type == "cn" ? "be" : var.node_type
       fe_config            = var.fe_config
       be_storage_root_path = var.be_storage_root_path
       cn_config            = var.cn_config
