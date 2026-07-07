@@ -79,6 +79,7 @@ variable "fe_config" {
       access_key           = optional(string, "")
       secret_key           = optional(string, "")
     }), {})
+    additional_conf = optional(list(string), [])
   })
   sensitive = true
 }
