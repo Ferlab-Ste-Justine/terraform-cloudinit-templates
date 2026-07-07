@@ -190,6 +190,9 @@ runcmd:
 %{ if fe_config.iceberg_rest.ca_cert != "" ~}
   - keytool -import -noprompt -keystore ${dependencies.java_home}/lib/security/cacerts -file /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt -storepass changeit -alias ic-${fe_config.iceberg_rest.env_name}
 %{ endif ~}
+%{ for conf_line in fe_config.additional_conf ~}
+  - echo '${conf_line}' >> starrocks/fe/conf/fe.conf
+%{ endfor ~}
 %{ endif ~}
 %{ if node_type == "be" ~}
   - mkdir -p ${be_storage_root_path}
