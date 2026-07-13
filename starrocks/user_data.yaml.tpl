@@ -33,6 +33,18 @@ write_files:
     content: |
       ${indent(6, fe_config.ssl.key)}
 %{ endif ~}
+%{ if fe_config.ranger != null ~}
+  - path: /opt/ranger/ranger-starrocks-audit.xml
+    owner: root:root
+    permissions: "0444"
+    content: |
+      ${indent(6, ranger_audit_conf)}
+  - path: /opt/ranger/ranger-starrocks-security.xml
+    owner: root:root
+    permissions: "0400"
+    content: |
+      ${indent(6, ranger_security_conf)}
+%{ endif ~}
 %{ if fe_config.iceberg_rest.ca_cert != "" ~}
   - path: /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt
     owner: root:root
@@ -193,6 +205,11 @@ runcmd:
 %{ for conf_line in fe_config.additional_conf ~}
   - echo '${conf_line}' >> starrocks/fe/conf/fe.conf
 %{ endfor ~}
+%{ if fe_config.ranger != null ~}
+  - echo 'access_control = ranger' >> starrocks/fe/conf/fe.conf
+  - cp /opt/ranger/ranger-starrocks-audit.xml /opt/ranger/ranger-starrocks-security.xml starrocks/fe/conf/
+  - chmod 0400 starrocks/fe/conf/ranger-starrocks-security.xml
+%{ endif ~}
 %{ endif ~}
 %{ if node_type == "be" ~}
   - mkdir -p ${be_storage_root_path}
