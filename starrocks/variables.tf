@@ -80,8 +80,18 @@ variable "fe_config" {
       secret_key           = optional(string, "")
     }), {})
     additional_conf = optional(list(string), [])
+    ranger = optional(object({
+      host          = string
+      sync_username = string
+      sync_password = string
+    }))
   })
   sensitive = true
+
+  validation {
+    condition     = var.fe_config.ranger == null ? true : (var.fe_config.ranger.host != "" && var.fe_config.ranger.sync_username != "" && var.fe_config.ranger.sync_password != "")
+    error_message = "fe_config.ranger requires non-empty host, sync_username and sync_password."
+  }
 }
 
 variable "be_storage_root_path" {
