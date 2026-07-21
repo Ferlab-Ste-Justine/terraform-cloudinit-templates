@@ -7,6 +7,7 @@ variable "dependencies" {
       frontend = optional(list(string), ["mysql-client"])
     }), {})
     java_home         = optional(string, "/usr/lib/jvm/java-17-openjdk-amd64")
+    version           = optional(string, "3.5.19")
     starrocks_tar_url = optional(string, "https://releases.starrocks.io/starrocks/StarRocks-3.5.19-ubuntu-amd64.tar.gz")
   })
   default = {}

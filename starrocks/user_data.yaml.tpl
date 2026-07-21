@@ -61,7 +61,7 @@ write_files:
       Documentation=https://docs.starrocks.io/
       Requires=network-online.target
       After=network-online.target
-      ConditionFileNotEmpty=/opt/starrocks/${install_dir}/conf/${node_type}.conf
+      ConditionFileNotEmpty=/opt/starrocks/current/${install_dir}/conf/${node_type}.conf
       StartLimitIntervalSec=60
       StartLimitBurst=3
 
@@ -78,18 +78,18 @@ write_files:
       NoNewPrivileges=yes
 %{ if node_type == "fe" ~}
 %{ if fe_config.initial_leader.enabled ~}
-      ExecStart=/opt/starrocks/fe/bin/start_fe.sh --host_type FQDN
+      ExecStart=/opt/starrocks/current/fe/bin/start_fe.sh --host_type FQDN
 %{ else ~}
-      ExecStart=/opt/starrocks/fe/bin/start_fe.sh --helper ${fe_config.initial_follower.fe_leader_fqdn}:9010 --host_type FQDN
+      ExecStart=/opt/starrocks/current/fe/bin/start_fe.sh --helper ${fe_config.initial_follower.fe_leader_fqdn}:9010 --host_type FQDN
 %{ endif ~}
 %{ endif ~}
 %{ if node_type == "be" ~}
-      ExecStart=/opt/starrocks/be/bin/start_be.sh
+      ExecStart=/opt/starrocks/current/be/bin/start_be.sh
 %{ endif ~}
 %{ if node_type == "cn" ~}
-      ExecStart=/opt/starrocks/${install_dir}/bin/start_cn.sh
+      ExecStart=/opt/starrocks/current/${install_dir}/bin/start_cn.sh
 %{ endif ~}
-      ExecStop=/opt/starrocks/${install_dir}/bin/stop_${node_type}.sh --graceful
+      ExecStop=/opt/starrocks/current/${install_dir}/bin/stop_${node_type}.sh --graceful
       SuccessExitStatus=143
       Restart=on-failure
       RestartSec=5
@@ -164,70 +164,71 @@ runcmd:
 
   #Preparation: Deployment files
   - cd /opt
-  - mkdir -p starrocks
+  - mkdir -p starrocks/versions/${dependencies.version}
   - wget -T 30 -t 10 -c -O starrocks.tar.gz ${dependencies.starrocks_tar_url}
-  - tar xzf starrocks.tar.gz -C starrocks --wildcards --strip-components=1 '*/${install_dir}' '*/LICENSE.txt' '*/NOTICE.txt'
+  - tar xzf starrocks.tar.gz -C starrocks/versions/${dependencies.version} --wildcards --strip-components=1 '*/${install_dir}' '*/LICENSE.txt' '*/NOTICE.txt'
   - rm starrocks.tar.gz
+  - ln -sfn versions/${dependencies.version} starrocks/current
 
   #Configuration
 %{ if node_type == "fe" ~}
   - mkdir -p ${fe_config.meta_dir}
   - chown starrocks:starrocks ${fe_config.meta_dir}
-  - echo 'meta_dir = ${fe_config.meta_dir}' >> starrocks/fe/conf/fe.conf
+  - echo 'meta_dir = ${fe_config.meta_dir}' >> starrocks/current/fe/conf/fe.conf
 %{ if fe_config.shared_data.enabled ~}
-  - echo 'run_mode = shared_data' >> starrocks/fe/conf/fe.conf
-  - echo 'enable_load_volume_from_conf = true' >> starrocks/fe/conf/fe.conf
-  - echo 'cloud_native_storage_type = ${fe_config.shared_data.storage_type}' >> starrocks/fe/conf/fe.conf
-  - echo 'aws_s3_endpoint = ${fe_config.shared_data.s3_endpoint}' >> starrocks/fe/conf/fe.conf
-  - echo 'aws_s3_path = ${fe_config.shared_data.s3_path}' >> starrocks/fe/conf/fe.conf
+  - echo 'run_mode = shared_data' >> starrocks/current/fe/conf/fe.conf
+  - echo 'enable_load_volume_from_conf = true' >> starrocks/current/fe/conf/fe.conf
+  - echo 'cloud_native_storage_type = ${fe_config.shared_data.storage_type}' >> starrocks/current/fe/conf/fe.conf
+  - echo 'aws_s3_endpoint = ${fe_config.shared_data.s3_endpoint}' >> starrocks/current/fe/conf/fe.conf
+  - echo 'aws_s3_path = ${fe_config.shared_data.s3_path}' >> starrocks/current/fe/conf/fe.conf
 %{ if fe_config.shared_data.s3_region != "" ~}
-  - echo 'aws_s3_region = ${fe_config.shared_data.s3_region}' >> starrocks/fe/conf/fe.conf
+  - echo 'aws_s3_region = ${fe_config.shared_data.s3_region}' >> starrocks/current/fe/conf/fe.conf
 %{ endif ~}
 %{ if fe_config.shared_data.use_instance_profile ~}
-  - echo 'aws_s3_use_instance_profile = true' >> starrocks/fe/conf/fe.conf
-  - echo 'aws_s3_use_aws_sdk_default_behavior = true' >> starrocks/fe/conf/fe.conf
+  - echo 'aws_s3_use_instance_profile = true' >> starrocks/current/fe/conf/fe.conf
+  - echo 'aws_s3_use_aws_sdk_default_behavior = true' >> starrocks/current/fe/conf/fe.conf
 %{ else ~}
-  - echo 'aws_s3_access_key = ${fe_config.shared_data.access_key}' >> starrocks/fe/conf/fe.conf
-  - echo 'aws_s3_secret_key = ${fe_config.shared_data.secret_key}' >> starrocks/fe/conf/fe.conf
+  - echo 'aws_s3_access_key = ${fe_config.shared_data.access_key}' >> starrocks/current/fe/conf/fe.conf
+  - echo 'aws_s3_secret_key = ${fe_config.shared_data.secret_key}' >> starrocks/current/fe/conf/fe.conf
 %{ endif ~}
 %{ endif ~}
 %{ if fe_config.ssl.enabled ~}
   - openssl pkcs12 -export -in ssl/starrocks.crt -inkey ssl/starrocks.key -out ssl/starrocks.p12 -passout pass:${fe_config.ssl.keystore_password}
   - chown -R starrocks:starrocks ssl
-  - echo 'ssl_keystore_location = /opt/ssl/starrocks.p12' >> starrocks/fe/conf/fe.conf
-  - echo 'ssl_keystore_password = ${fe_config.ssl.keystore_password}' >> starrocks/fe/conf/fe.conf
-  - echo 'ssl_key_password = ${fe_config.ssl.keystore_password}' >> starrocks/fe/conf/fe.conf
-  - echo 'ssl_force_secure_transport = ${fe_config.ssl.force_secure_transport}' >> starrocks/fe/conf/fe.conf
+  - echo 'ssl_keystore_location = /opt/ssl/starrocks.p12' >> starrocks/current/fe/conf/fe.conf
+  - echo 'ssl_keystore_password = ${fe_config.ssl.keystore_password}' >> starrocks/current/fe/conf/fe.conf
+  - echo 'ssl_key_password = ${fe_config.ssl.keystore_password}' >> starrocks/current/fe/conf/fe.conf
+  - echo 'ssl_force_secure_transport = ${fe_config.ssl.force_secure_transport}' >> starrocks/current/fe/conf/fe.conf
 %{ endif ~}
 %{ if fe_config.iceberg_rest.ca_cert != "" ~}
   - keytool -import -noprompt -keystore ${dependencies.java_home}/lib/security/cacerts -file /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt -storepass changeit -alias ic-${fe_config.iceberg_rest.env_name}
 %{ endif ~}
 %{ for conf_line in fe_config.additional_conf ~}
-  - echo '${conf_line}' >> starrocks/fe/conf/fe.conf
+  - echo '${conf_line}' >> starrocks/current/fe/conf/fe.conf
 %{ endfor ~}
 %{ if fe_config.ranger != null ~}
-  - echo 'access_control = ranger' >> starrocks/fe/conf/fe.conf
-  - cp /opt/ranger/ranger-starrocks-audit.xml /opt/ranger/ranger-starrocks-security.xml starrocks/fe/conf/
-  - chmod 0400 starrocks/fe/conf/ranger-starrocks-security.xml
+  - echo 'access_control = ranger' >> starrocks/current/fe/conf/fe.conf
+  - cp /opt/ranger/ranger-starrocks-audit.xml /opt/ranger/ranger-starrocks-security.xml starrocks/current/fe/conf/
+  - chmod 0400 starrocks/current/fe/conf/ranger-starrocks-security.xml
 %{ endif ~}
 %{ endif ~}
 %{ if node_type == "be" ~}
   - mkdir -p ${be_storage_root_path}
   - chown starrocks:starrocks ${be_storage_root_path}
-  - echo 'storage_root_path = ${be_storage_root_path}' >> starrocks/be/conf/be.conf
+  - echo 'storage_root_path = ${be_storage_root_path}' >> starrocks/current/be/conf/be.conf
 %{ endif ~}
 %{ if node_type == "cn" ~}
   - mkdir -p ${cn_config.storage_root_path}
   - chown starrocks:starrocks ${cn_config.storage_root_path}
-  - echo 'storage_root_path = ${cn_config.storage_root_path}' >> starrocks/${install_dir}/conf/cn.conf
+  - echo 'storage_root_path = ${cn_config.storage_root_path}' >> starrocks/current/${install_dir}/conf/cn.conf
 %{ if cn_config.priority_networks != "" ~}
-  - echo 'priority_networks = ${cn_config.priority_networks}' >> starrocks/${install_dir}/conf/cn.conf
+  - echo 'priority_networks = ${cn_config.priority_networks}' >> starrocks/current/${install_dir}/conf/cn.conf
 %{ endif ~}
-  - echo 'mem_limit = ${cn_config.mem_limit}' >> starrocks/${install_dir}/conf/cn.conf
-  - echo 'datacache_mem_size = ${cn_config.datacache_mem_size}' >> starrocks/${install_dir}/conf/cn.conf
-  - echo 'datacache_disk_size = ${cn_config.datacache_disk_size}' >> starrocks/${install_dir}/conf/cn.conf
+  - echo 'mem_limit = ${cn_config.mem_limit}' >> starrocks/current/${install_dir}/conf/cn.conf
+  - echo 'datacache_mem_size = ${cn_config.datacache_mem_size}' >> starrocks/current/${install_dir}/conf/cn.conf
+  - echo 'datacache_disk_size = ${cn_config.datacache_disk_size}' >> starrocks/current/${install_dir}/conf/cn.conf
 %{ endif ~}
-  - chmod 0400 starrocks/${install_dir}/conf/${node_type}.conf
+  - chmod 0400 starrocks/current/${install_dir}/conf/${node_type}.conf
 
   #Service
   - chown -R starrocks:starrocks starrocks
