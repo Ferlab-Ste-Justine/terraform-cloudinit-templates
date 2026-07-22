@@ -20,6 +20,7 @@ output "configuration" {
           sync_password = var.fe_config.ranger.sync_password
         }
       ) : ""
+      fe_setup_script = templatefile("${path.module}/setup.sh.tpl", { fe_config = var.fe_config })
     }
   )
 }
