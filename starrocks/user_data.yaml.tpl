@@ -172,7 +172,7 @@ runcmd:
   #Preparation: Deployment files
   - cd /opt
   - mkdir -p starrocks
-  - wget -T 30 -t 10 -c -O starrocks.tar.gz ${dependencies.starrocks_tar_url}
+  - curl -fSL --connect-timeout 30 --retry 10 -C - -o starrocks.tar.gz ${dependencies.starrocks_tar_url}
   - tar xzf starrocks.tar.gz -C starrocks --wildcards --strip-components=1 '*/${install_dir}' '*/LICENSE.txt' '*/NOTICE.txt'
   - rm starrocks.tar.gz
 
