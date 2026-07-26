@@ -1,10 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+%{ if length(fe_config.seed_hosts) > 0 ~}
+seeded_deadline=$((SECONDS + 600))
+while ! mysqladmin -s -h127.0.0.1 -P9030 -uroot ping >/dev/null 2>&1; do
+  if [ "$SECONDS" -ge "$seeded_deadline" ]; then
+    echo "Local FE did not come up within timeout (joining an existing cluster or fail-loud); skipping bootstrap."
+    exit 0
+  fi
+  sleep 5
+done
+if [ ! -f /opt/starrocks/.fe-seeded ]; then
+  echo "This node did not seed the cluster (no /opt/starrocks/.fe-seeded marker); skipping bootstrap."
+  exit 0
+fi
+%{ else ~}
 if [ -f /tmp/fe-meta-preexisting ]; then
   echo "Existing FE metadata detected; skipping initial cluster bootstrap."
   exit 0
 fi
+%{ endif ~}
 
 %{ if fe_config.initial_leader.root_password.shell_source != null ~}
 . ${fe_config.initial_leader.root_password.shell_source}

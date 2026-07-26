@@ -80,6 +80,8 @@ variable "fe_config" {
       secret_key           = optional(string, "")
     }), {})
     additional_conf = optional(list(string), [])
+    seed_hosts      = optional(list(string), [])
+    initial_cluster = optional(bool, false)
     ranger = optional(object({
       host          = string
       sync_username = string
