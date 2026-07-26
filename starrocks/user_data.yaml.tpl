@@ -59,6 +59,13 @@ write_files:
     content: |
       ${indent(6, fe_setup_script)}
 %{ endif ~}
+%{ if node_type == "fe" && length(fe_config.seed_hosts) > 0 ~}
+  - path: /opt/starrocks/start-fe-guarded.sh
+    owner: root:root
+    permissions: "0755"
+    content: |
+      ${indent(6, fe_guarded_start_script)}
+%{ endif ~}
   - path: /etc/systemd/system/starrocks.service
     owner: root:root
     permissions: "0444"
@@ -69,7 +76,11 @@ write_files:
       Requires=network-online.target
       After=network-online.target
       ConditionFileNotEmpty=/opt/starrocks/${install_dir}/conf/${node_type}.conf
+%{ if node_type == "fe" && length(fe_config.seed_hosts) > 0 ~}
+      StartLimitIntervalSec=0
+%{ else ~}
       StartLimitIntervalSec=60
+%{ endif ~}
       StartLimitBurst=3
 
       [Service]
@@ -84,10 +95,14 @@ write_files:
       CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
       NoNewPrivileges=yes
 %{ if node_type == "fe" ~}
+%{ if length(fe_config.seed_hosts) > 0 ~}
+      ExecStart=/opt/starrocks/start-fe-guarded.sh
+%{ else ~}
 %{ if fe_config.initial_leader.enabled ~}
       ExecStart=/opt/starrocks/fe/bin/start_fe.sh --host_type FQDN
 %{ else ~}
       ExecStart=/opt/starrocks/fe/bin/start_fe.sh --helper ${fe_config.initial_follower.fe_leader_fqdn}:9010 --host_type FQDN
+%{ endif ~}
 %{ endif ~}
 %{ endif ~}
 %{ if node_type == "be" ~}

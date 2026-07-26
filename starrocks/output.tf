@@ -21,6 +21,16 @@ output "configuration" {
         }
       ) : ""
       fe_setup_script = templatefile("${path.module}/setup.sh.tpl", { fe_config = var.fe_config })
+      fe_guarded_start_script = var.node_type == "fe" && length(var.fe_config.seed_hosts) > 0 ? templatefile(
+        "${path.module}/start-fe-guarded.sh.tpl",
+        {
+          meta_dir        = var.fe_config.meta_dir
+          install_dir     = var.node_type == "cn" ? "be" : var.node_type
+          seed_hosts      = var.fe_config.seed_hosts
+          initial_cluster = var.fe_config.initial_cluster
+          self_host       = var.hosts_file_patch.fqdn
+        }
+      ) : ""
     }
   )
 }
