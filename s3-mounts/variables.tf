@@ -18,5 +18,6 @@ variable "mounts" {
       owner = string
       umask = string
     })
+    tmpdir = string
   }))
 }

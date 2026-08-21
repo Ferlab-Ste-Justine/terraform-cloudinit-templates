@@ -36,8 +36,9 @@ runcmd:
   - update-ca-certificates
 %{ endif ~}
   - mkdir -p /mnt/${mount.bucket_name}
+  - mkdir -p ${mount.tmpdir}
   - USER_ID=$(id -u ${mount.folder.owner})
   - GROUP_ID=$(id -g ${mount.folder.owner})
-  - echo "${mount.bucket_name} /mnt/${mount.bucket_name} fuse.s3fs _netdev,allow_other,uid=$${USER_ID},gid=$${GROUP_ID},umask=${mount.folder.umask},passwd_file=/etc/s3fs/${mount.bucket_name}_passwd$${S3COMPATIBLE_ARGS} 0 0" >> /etc/fstab
+  - echo "${mount.bucket_name} /mnt/${mount.bucket_name} fuse.s3fs _netdev,allow_other,uid=$${USER_ID},gid=$${GROUP_ID},umask=${mount.folder.umask},passwd_file=/etc/s3fs/${mount.bucket_name}_passwd,tmpdir=${mount.tmpdir}$${S3COMPATIBLE_ARGS} 0 0" >> /etc/fstab
 %{ endfor ~}
   - mount -a
