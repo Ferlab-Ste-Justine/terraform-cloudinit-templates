@@ -21,6 +21,10 @@ output "configuration" {
         }
       ) : ""
       fe_setup_script = templatefile("${path.module}/setup.sh.tpl", { fe_config = var.fe_config })
+      cn_register_script = var.node_type == "cn" && var.cn_config.register != null ? templatefile(
+        "${path.module}/register-cn.sh.tpl",
+        { cn_config = var.cn_config }
+      ) : ""
       fe_guarded_start_script = var.node_type == "fe" && length(var.fe_config.seed_hosts) > 0 ? templatefile(
         "${path.module}/start-fe-guarded.sh.tpl",
         {

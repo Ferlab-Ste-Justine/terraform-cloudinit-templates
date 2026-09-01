@@ -109,6 +109,13 @@ variable "cn_config" {
     mem_limit           = optional(string, "80%")
     datacache_mem_size  = optional(string, "40%")
     datacache_disk_size = optional(string, "80%")
+    register = optional(object({
+      fe_host       = string
+      root_password = object({
+        shell_source = optional(string)
+        literal      = optional(string)
+      })
+    }))
   })
   default = {}
 }

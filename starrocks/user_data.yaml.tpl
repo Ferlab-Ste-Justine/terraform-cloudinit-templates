@@ -59,6 +59,13 @@ write_files:
     content: |
       ${indent(6, fe_setup_script)}
 %{ endif ~}
+%{ if node_type == "cn" && cn_config.register != null ~}
+  - path: /opt/starrocks/register-cn.sh
+    owner: root:root
+    permissions: "0700"
+    content: |
+      ${indent(6, cn_register_script)}
+%{ endif ~}
 %{ if node_type == "fe" && length(fe_config.seed_hosts) > 0 ~}
   - path: /opt/starrocks/start-fe-guarded.sh
     owner: root:root
@@ -260,4 +267,7 @@ runcmd:
   #Setup
 %{ if node_type == "fe" && fe_config.initial_leader.enabled ~}
   - /opt/starrocks/setup.sh
+%{ endif ~}
+%{ if node_type == "cn" && cn_config.register != null ~}
+  - /opt/starrocks/register-cn.sh
 %{ endif ~}
