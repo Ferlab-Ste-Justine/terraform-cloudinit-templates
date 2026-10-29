@@ -23,6 +23,11 @@ runcmd:
   - dpkg -i /tmp/cuda-keyring.deb
   - rm /tmp/cuda-keyring.deb
   - apt-get update
+%{ if tonumber(driver_branch) >= 590 ~}
+  # Keep apt on this driver branch (needed from 590)
+  # Reference: https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/version-locking.html#pinning-packages
+  - apt-get install -y nvidia-driver-pinning-${driver_branch}
+%{ endif ~}
 %{ if use_open_kernel_module ~}
   - apt-get install -y nvidia-open-${driver_branch}
 %{ else ~}
