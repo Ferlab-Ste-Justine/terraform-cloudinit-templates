@@ -86,6 +86,7 @@ variable "fe_config" {
       host          = string
       sync_username = string
       sync_password = string
+      ca_cert       = optional(string, "")
     }))
   })
   sensitive = true

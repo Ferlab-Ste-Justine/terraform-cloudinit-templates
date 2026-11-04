@@ -44,6 +44,13 @@ write_files:
     permissions: "0400"
     content: |
       ${indent(6, ranger_security_conf)}
+%{ if fe_config.ranger.ca_cert != "" ~}
+  - path: /etc/ca-certificates/ranger/starrocks-ranger-ca.crt
+    owner: root:root
+    permissions: "0444"
+    content: |
+      ${indent(6, fe_config.ranger.ca_cert)}
+%{ endif ~}
 %{ endif ~}
 %{ if fe_config.iceberg_rest.ca_cert != "" ~}
   - path: /etc/ca-certificates/iceberg_catalog/${fe_config.iceberg_rest.env_name}-iceberg-rest-ca.crt
@@ -232,6 +239,9 @@ runcmd:
   - echo 'access_control = ranger' >> starrocks/fe/conf/fe.conf
   - cp /opt/ranger/ranger-starrocks-audit.xml /opt/ranger/ranger-starrocks-security.xml starrocks/fe/conf/
   - chmod 0400 starrocks/fe/conf/ranger-starrocks-security.xml
+%{ if fe_config.ranger.ca_cert != "" ~}
+  - keytool -import -noprompt -keystore ${dependencies.java_home}/lib/security/cacerts -file /etc/ca-certificates/ranger/starrocks-ranger-ca.crt -storepass changeit -alias sr-ranger-ca
+%{ endif ~}
 %{ endif ~}
 %{ endif ~}
 %{ if node_type == "be" ~}

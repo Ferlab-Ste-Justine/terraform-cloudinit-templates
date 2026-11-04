@@ -1,5 +1,6 @@
 output "configuration" {
   description = "Cloudinit compatible starrocks configurations"
+  sensitive = true
   value = templatefile(
     "${path.module}/user_data.yaml.tpl",
     {
